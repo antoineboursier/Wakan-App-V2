@@ -1,0 +1,45 @@
+export const colors = {
+    text: {
+        primary: "#f4efeb",
+        secondary: "#cdbcae",
+        tertiary: "#969491",
+        disabled: "#939393",
+    },
+    background: {
+        900: "#18272e",
+        800: "#1c3039",
+        700: "#253f4b",
+        600: "#2d4d5c",
+        500: "#365c6e",
+        400: "#3e6a7f",
+        300: "#467990",
+        200: "#4e87a1",
+        100: "#8db6c9",
+    },
+    accent: {
+        900: "#f6ae31",
+        700: "#f1ba5b",
+        500: "#f5ce8a",
+        disabled: "#b3ada5",
+    },
+    accentText: {
+        on900: "#253f4b",
+        on700: "#1c3039",
+        on500: "#18272e",
+        onDisabled: "#363f44",
+    },
+    ui: {
+        alert: "#6f344a",
+        onAlert: "#ff99a0",
+        warning: "#5e4837",
+        onWarning: "#ffab6b",
+        positive: "#1b574c",
+        onPositive: "#10f990",
+    },
+    rich: {
+        pink: "#ff2b7c",
+        purple: "#ba05c7",
+        yellow: "#f6df31",
+        blue: "#249be9",
+    },
+} as const;
