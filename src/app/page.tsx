@@ -6,20 +6,8 @@ import { Separator } from "@/components/ui/Separator";
 import { WakanLogo } from "@/components/ui/WakanLogo";
 import { Button } from "@/components/ui/Button";
 import Image from "next/image";
+import { Icon } from "@iconify/react";
 
-// Icône Soleil pour le bouton Astro (Style Iconify/Lucide)
-const SunIcon = (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="1em"
-    height="1em"
-    viewBox="0 0 24 24"
-    fill="currentColor" /* Utilisation de fill currentColor pour Iconify style souvent plein ou stroke */
-  >
-    {/* Version Solaire Simple (similaire à Iconify ph:sun-bold ou solar:sun-bold) */}
-    <path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M12 17a5 5 0 1 0 0-10a5 5 0 0 0 0 10Z" />
-  </svg>
-);
 
 export default function DashboardPage() {
   return (
@@ -36,7 +24,7 @@ export default function DashboardPage() {
       </header>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="relative z-10 flex flex-col items-center px-4 w-full max-w-md mx-auto pb-32" id="dashboard-main-content">
+      <main className="relative z-10 flex flex-col items-center px-4 w-full max-w-md mx-auto pb-4" id="dashboard-main-content">
 
         {/* ZONE B: Widgets Lunaires */}
         <section id="zone-b-moon-grid" className="grid grid-cols-2 gap-3 h-auto w-full">
@@ -51,7 +39,7 @@ export default function DashboardPage() {
               style={{
                 background: "linear-gradient(90deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)",
                 backdropFilter: "blur(2px)",
-                border: "1px solid rgba(255,255,255,0.05)"
+
               }}
             >
               {/* SVG Circular Progress */}
@@ -85,7 +73,7 @@ export default function DashboardPage() {
               style={{
                 background: "linear-gradient(90deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)",
                 backdropFilter: "blur(2px)",
-                border: "1px solid rgba(255,255,255,0.05)"
+
               }}
             >
               <div className="w-full px-2 relative h-6 flex items-center">
@@ -139,7 +127,7 @@ export default function DashboardPage() {
         </section>
 
         {/* ZONE C: Astro Cards */}
-        <section id="zone-c-astro-cards" className="grid grid-cols-2 gap-3 h-auto mt-3 w-full">
+        <section id="zone-c-astro-cards" className="grid grid-cols-2 gap-3 h-auto mt-6 w-full">
 
           {/* Widget: Signe Lunaire */}
           <div
@@ -174,7 +162,7 @@ export default function DashboardPage() {
               style={{
                 background: "linear-gradient(90deg, rgba(28, 48, 57, 0.6) 0%, rgba(28, 48, 57, 0.9) 100%)",
                 backdropFilter: "blur(4px)",
-                border: "1px solid rgba(255,255,255,0.05)"
+
               }}
             >
               <div className="flex flex-col items-start z-10">
@@ -197,7 +185,7 @@ export default function DashboardPage() {
               style={{
                 background: "linear-gradient(90deg, rgba(28, 48, 57, 0.6) 0%, rgba(28, 48, 57, 0.9) 100%)",
                 backdropFilter: "blur(4px)",
-                border: "1px solid rgba(255,255,255,0.05)"
+
               }}
             >
               <div className="flex flex-col items-start z-10">
@@ -219,25 +207,25 @@ export default function DashboardPage() {
         </section>
 
         {/* ZONE D: Actions & Separator */}
-        <section id="zone-d-actions" className="flex flex-col items-center w-full mt-8">
+        <section id="zone-d-astro-cta" className="w-full flex flex-col items-center gap-2 mt-6 mb-0">
 
           {/* Nouveau Bouton Composant */}
           <Button
             variant="primary"
-            icon={SunIcon}
-            className="mb-3"
+            icon={<Icon icon="fa-solid:sun" width="24" height="24" />}
+            className="shadow-[0px_4px_14.1px_0px_rgba(246,174,49,0.40)] w-full max-w-[200px]"
           >
             Astro du jour
           </Button>
 
-          <p className="text-[var(--text-primary)] text-sm font-body opacity-90 mb-0">
+          <p className="text-[var(--text-primary)] text-sm font-body opacity-90">
             10 tirages gratuits/mois - 8 restants
           </p>
-
-          <div id="separator-container" className="w-full">
-            <Separator />
-          </div>
         </section>
+
+        <div id="separator-container" className="w-full">
+          <Separator />
+        </div>
 
         {/* ZONE E: Premium */}
         <section id="zone-e-premium" className="w-full mb-8">

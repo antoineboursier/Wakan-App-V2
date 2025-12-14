@@ -7,11 +7,11 @@ export function WakanLogo() {
     const centerOrigin = "70.558px 60.6258px";
 
     return (
-        <div className="relative w-48 h-auto flex items-center justify-center select-none mb-32" aria-label="Logo Wakan">
+        <div className="relative w-48 h-auto flex items-center justify-center select-none mb-6" aria-label="Logo Wakan">
             <svg
-                width="90%"
-                height="90%"
-                viewBox="0 0 120 120"
+                width="100%"
+                height="100%"
+                viewBox="0 0 141 104"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 className="overflow-visible"

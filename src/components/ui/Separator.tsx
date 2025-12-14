@@ -2,15 +2,15 @@ import React from "react";
 
 export function Separator() {
     return (
-        <div className="flex items-center justify-center w-full py-12">
+        <div className="flex items-center justify-center w-full py-8">
             {/* Point gauche */}
             <div className="animate-shrink-grow w-1.5 h-1.5 rounded-full bg-[var(--text-primary)]"></div>
 
             {/* SVG Animé - Inline pour contrôle CSS */}
             <svg
-                width="61"
-                height="38"
-                viewBox="0 0 61 38"
+                width="60"
+                height="40"
+                viewBox="0 0 60 40"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 className="block"
