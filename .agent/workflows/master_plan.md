@@ -52,14 +52,14 @@ Tokens obligatoires : Couleurs, Espacements, Radii, Ombres, Typos.
 ## 11. Roadmap
 
 ### Phase 1 — Socle (Semaine 1)
-- [ ] Repo Next propre (wakan-pwa)
-- [ ] DS installé
-- [ ] Auth Supabase
-- [ ] Navigation
-- [ ] Skeleton pages
+- [x] Repo Next propre (wakan-pwa)
+- [x] DS installé (Skeleton Tailwind + Variables CSS)
+- [x] Auth Supabase (Config + Client/Server Utils)
+- [x] Navigation (Figma Integrated)
+- [x] Skeleton pages (Styled from Figma)
 
 ### Phase 2 — Dashboard + thèmes (Semaine 2)
-- [ ] Dashboard complet
+- [x] Dashboard complet (UI Only)
 - [ ] Thèmes fonctionnels
 
 ### Phase 3 — Quiz + tirages (Semaine 3)

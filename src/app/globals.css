@@ -1,26 +1,254 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* --- Wakan Color Palette (Figma Extraction) --- */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Backgrounds */
+  --background-900: #18272e;
+  /* Main App BG */
+  --background-800: #1c3039;
+  /* Cards / Nav */
+  --background-700: #253f4b;
+  --background-600: #2d4d5c;
+  /* Borders / Separators */
+  --background-500: #365c6e;
+  --background-400: #3e6a7f;
+  --background-300: #467990;
+  --background-200: #4e87a1;
+  --background-100: #8db6c9;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Typography */
+  --text-primary: #f4efeb;
+  /* Headings, Main text */
+  --text-secondary: #cdbcae;
+  /* Subtitles */
+  --text-tertiary: #969491;
+  /* Muted text */
+  --text-disabled: #939393;
+
+  /* Accents (Gold/Amber) */
+  --accent-900: #f6ae31;
+  /* Primary Actions / Highlights */
+  --accent-700: #f1ba5b;
+  --accent-500: #f5ce8a;
+  --accent-disabled: #b3ada5;
+
+  /* Accent Text (On Dark Buttons) */
+  --accent-text-on-900: #253f4b;
+  --accent-text-on-700: #1c3039;
+
+  /* Rich Colors (Magical Accents) */
+  --rich-pink: #ff2b7c;
+  --rich-purple: #ba05c7;
+  --rich-yellow: #f6df31;
+  --rich-blue: #249be9;
+
+  /* UI Feedback */
+  --ui-positive: #1b574c;
+  --ui-on-positive: #10f990;
+  --ui-warning: #5e4837;
+  --ui-on-warning: #ffab6b;
+  --ui-alert: #6f344a;
+  --ui-on-alert: #ff99a0;
+
+  /* Sizes (Figma) */
+  --sizes-xs: 4px;
+  --sizes-s: 8px;
+  --sizes-sm: 12px;
+  --sizes-m: 16px;
+  --sizes-l: 24px;
+  --sizes-xl: 32px;
+
+  /* Gradients & Special Colors */
+  --accent_gradiant: linear-gradient(180deg, var(--accent-700) 2.04%, #F4930B 100%);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background-900);
+  color: var(--text-primary);
+  font-family: var(--font-league-spartan), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-skranji), serif;
+}
+
+/* --- Figma Typography Classes --- */
+
+/* /title_med: Skranji, 22px */
+.title-med {
+  font-family: var(--font-skranji);
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 400;
+}
+
+/* /title_lit: Skranji, 18px */
+.title-lit {
+  font-family: var(--font-skranji);
+  font-size: 24px;
+  /* Ajusté visuellement pour matcher "2€/mois" */
+  line-height: 1;
+  font-weight: 400;
+}
+
+/* /para: League Spartan, 14px */
+.para {
+  font-family: var(--font-league-spartan);
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+/* /para_big: League Spartan, 16px */
+.para-big {
+  font-family: var(--font-league-spartan);
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+/* --- Animations --- */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 24s linear infinite;
+  transform-origin: center;
+}
+
+.animate-spin-reverse {
+  animation: spin 24s linear infinite reverse;
+  transform-origin: center;
+}
+
+@keyframes heartbeat {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+    opacity: 0.8;
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes shrink-grow {
+
+  0%,
+  50% {
+    transform: scale(1);
+  }
+
+  60% {
+    transform: scale(0.92);
+  }
+
+  80% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-shrink-grow {
+  animation: shrink-grow 8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.animate-shrink-grow-slow {
+  animation: shrink-grow 16s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* --- Components (Buttons) --- */
+
+.btn-wakan-primary {
+  display: inline-flex;
+  padding: var(--sizes-sm, 12px) var(--sizes-m, 16px);
+  align-items: center;
+  gap: var(--sizes-s, 8px);
+  border-radius: var(--sizes-m, 16px);
+  border: 1px solid var(--accent-500);
+  background: var(--accent_gradiant);
+  box-shadow: 0 2px 2px 0 rgba(24, 39, 46, 0.40), 0 8px 32px 0 rgba(246, 174, 49, 0.60), 0 2px 1px 0 rgba(244, 239, 235, 0.50) inset, 0 -2px 1px 0 rgba(24, 39, 46, 0.50) inset;
+
+  /* Text */
+  color: var(--accent-text-on-900);
+  text-align: center;
+  font-family: var(--font-heading);
+  /* Supposed "ui_button_text" maps to this or body bold */
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.btn-wakan-primary:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.btn-wakan-primary:disabled {
+  border: 1px solid var(--accent-disabled);
+  background: var(--accent-disabled);
+  box-shadow: 0 2px 2px 0 rgba(24, 39, 46, 0.40), 0 2px 1px 0 rgba(244, 239, 235, 0.50) inset, 0 -2px 1px 0 rgba(24, 39, 46, 0.50) inset;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(1);
+}
+
+.btn-wakan-secondary {
+  display: inline-flex;
+  padding: var(--sizes-sm, 12px) var(--sizes-m, 16px);
+  align-items: center;
+  gap: var(--sizes-s, 8px);
+  border-radius: var(--sizes-m, 16px);
+  border: 1px solid #F1BA5B;
+  /* var(--accent_gradiant) as border color usually means the solid color fallback or specific hex */
+  background: var(--background-800);
+  box-shadow: 0 2px 1px 0 rgba(244, 239, 235, 0.20) inset, 0 -2px 1px 0 rgba(24, 39, 46, 0.20) inset;
+
+  /* Text */
+  color: var(--text-primary);
+  /* Assuming white text for secondary on dark bg */
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.btn-wakan-secondary:hover {
+  transform: scale(1.02);
+  background: var(--background-700);
+}
+
+.btn-wakan-secondary:disabled {
+  border: 1px solid var(--accent-disabled);
+  background: var(--background-800);
+  box-shadow: 0 2px 1px 0 rgba(244, 239, 235, 0.20) inset, 0 -2px 1px 0 rgba(24, 39, 46, 0.20) inset;
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  transform: none;
 }
