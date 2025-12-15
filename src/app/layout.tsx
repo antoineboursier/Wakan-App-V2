@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="fr" className="dark">
       <body className={`${skranji.variable} ${leagueSpartan.variable} antialiased min-h-screen bg-[var(--background-900)] text-[var(--text-primary)] font-body`}>
         <Navigation />
-        <main className="md:ml-64 pb-24 md:pb-0 h-full min-h-screen relative overflow-x-hidden">
+        <main className="md:pb-24 md:pb-0 h-full min-h-screen relative overflow-x-hidden">
           {children}
         </main>
       </body>

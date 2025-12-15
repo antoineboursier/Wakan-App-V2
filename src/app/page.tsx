@@ -9,7 +9,47 @@ import Image from "next/image";
 import { Icon } from "@iconify/react";
 
 
+import { useState, useEffect } from "react";
+
 export default function DashboardPage() {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [lunarData, setLunarData] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchLunarData() {
+      try {
+        // Formater la date sélectionnée en YYYY-MM-DD
+        const dateStr = selectedDate.toISOString().split('T')[0];
+
+        // Appeler l'API avec le paramètre date
+        const res = await fetch(`/api/lunar?date=${dateStr}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLunarData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch lunar data", error);
+      }
+    }
+    fetchLunarData();
+  }, [selectedDate]);
+
+  const handlePrevDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const handleNextDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() + 1);
+    setSelectedDate(newDate);
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
+  };
+
   return (
     <div className="min-h-screen font-body relative" id="dashboard-page">
 
@@ -26,100 +66,158 @@ export default function DashboardPage() {
       {/* --- MAIN CONTENT --- */}
       <main className="relative z-10 flex flex-col items-center px-4 w-full max-w-md mx-auto pb-4" id="dashboard-main-content">
 
-        {/* ZONE B: Widgets Lunaires */}
-        <section id="zone-b-moon-grid" className="grid grid-cols-2 gap-3 h-auto w-full">
+        {/* --- DATE SELECTOR --- */}
+        <div className="w-full flex items-center justify-between mb-6 px-1">
+          <button
+            onClick={handlePrevDay}
+            className="p-2 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--background-600)] transition-colors"
+            aria-label="Jour précédent"
+          >
+            <Icon icon="el:chevron-left" width="24" height="24" />
+          </button>
 
-          {/* Col 1: Cycle + Périgée */}
+          <div
+            className="relative flex items-center justify-center px-6 py-2 rounded-[16px] bg-[var(--background-800)] border border-[var(--background-500)] shadow-inner text-[var(--text-primary)] font-body text-lg capitalize w-full mx-3 text-center overflow-hidden"
+            style={{
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2)"
+            }}
+          >
+            {/* Input Date Natif Invisible (Overlay) */}
+            <input
+              type="date"
+              value={selectedDate.toISOString().split('T')[0]}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setSelectedDate(new Date(e.target.value));
+                }
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              aria-label="Choisir une date"
+            />
+
+            {/* Affichage Stylisé (Visible) */}
+            <div className="pointer-events-none flex items-center justify-center gap-2">
+              <span>{formatDate(selectedDate)}</span>
+              <Icon
+                icon="bxs:calendar"
+                width="20"
+                height="20"
+                className="text-[var(--text-secondary)] opacity-80"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleNextDay}
+            className="p-2 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--background-600)] transition-colors"
+            aria-label="Jour suivant"
+          >
+            <Icon icon="el:chevron-right" width="24" height="24" />
+          </button>
+        </div>
+
+        {/* ZONE B: Moon Cards */}
+        <section id="zone-b-moon-dashboard" className="grid grid-cols-2 gap-3 w-full">
+
+          {/* Col 1: Cycle Day + Distance */}
           <div className="flex flex-col gap-3">
 
-            {/* Widget J2 Cycle */}
+            {/* Widget Cycle Day */}
             <div
               id="widget-moon-cycle"
               className="flex flex-col items-center justify-center p-3 rounded-3xl relative overflow-hidden aspect-square"
               style={{
-                background: "linear-gradient(90deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)",
-                backdropFilter: "blur(2px)",
-
+                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
               }}
             >
-              {/* SVG Circular Progress */}
               <div className="relative w-24 h-24 flex items-center justify-center">
-                {/* Background Track */}
-                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
-                  {/* Active Progress */}
+                {/* Dynamique SVG Circle */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90 transform transition-all duration-1000 ease-out" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="4" fill="none" />
                   <circle
-                    cx="50" cy="50" r="40"
-                    fill="none"
+                    cx="50"
+                    cy="50"
+                    r="40"
                     stroke="var(--accent-500)"
-                    strokeWidth="6"
-                    strokeDasharray="251.2"
-                    strokeDashoffset="230"
+                    strokeWidth="4"
+                    fill="none"
                     strokeLinecap="round"
+                    style={{
+                      strokeDasharray: 251.2,
+                      strokeDashoffset: 251.2 - (251.2 * ((lunarData?.cycle_day || 0) / 29.5)),
+                      transition: "stroke-dashoffset 1.5s ease-out"
+                    }}
                   />
                 </svg>
 
                 <div className="text-center z-10 flex flex-col items-center leading-tight">
-                  <span className="font-heading text-3xl text-[var(--text-primary)] drop-shadow-md">J2</span>
-                  <span className="text-[10px] font-bold uppercase text-[var(--text-secondary)] w-16 leading-3">du cycle lunaire</span>
+                  <span className="title-med text-[var(--text-primary)] drop-shadow-lg">
+                    J{lunarData?.cycle_day ?? "-"}
+                  </span>
+                  <span className="para-lit text-[var(--text-secondary)] w-16 leading-3 opacity-80">du cycle lunaire</span>
                 </div>
               </div>
             </div>
 
-            {/* Widget Périgée / Apogée */}
+            {/* Widget Distance (Périgée/Apogée) */}
             <div
-              id="widget-perigee-apogee"
-              className="flex flex-col items-center justify-center p-3 rounded-2xl h-20"
+              id="widget-distance"
+              className="flex items-center justify-between px-5 py-0 h-16 rounded-[20px] relative overflow-hidden"
               style={{
-                background: "linear-gradient(90deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)",
-                backdropFilter: "blur(2px)",
-
+                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
               }}
             >
-              <div className="w-full px-2 relative h-6 flex items-center">
-                <div className="absolute left-0 right-0 h-0.5 bg-[var(--background-600)] top-1/2 -translate-y-1/2 rounded-full"></div>
-                <div className="absolute left-[20%] top-1/2 -translate-y-1/2 w-0.5 h-2 bg-[var(--background-400)]"></div>
-                <div className="absolute right-[20%] top-1/2 -translate-y-1/2 w-4 h-4 bg-[var(--accent-500)] rounded-full shadow-[0_0_8px_var(--accent-500)] border-2 border-[var(--background-800)] z-10 flex items-center justify-center">
-                  <div className="w-1 h-3 bg-[var(--background-800)]"></div>
-                </div>
+              <span className="para-lit text-[var(--text-tertiary)] w-12 text-left">Périgée</span>
+
+              {/* Simple Line Slider */}
+              <div className="flex-1 mx-2 h-full flex items-center relative">
+                <div className="w-full h-[2px] bg-[var(--text-tertiary)] opacity-20 rounded-full"></div>
+                {/* Dot Indicator */}
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-[var(--rich-yellow)] rounded-full shadow-[0_0_10px_rgba(246,174,49,0.6)] border-2 border-[var(--background-800)] z-10"
+                  style={{ left: "30%" }} // Mock position
+                ></div>
               </div>
-              <div className="flex justify-between w-full text-[10px] text-[var(--text-secondary)] mt-1 px-1 font-medium">
-                <span>Périgée</span>
-                <span>Apogée</span>
-              </div>
+
+              <span className="para-lit text-[var(--text-tertiary)] w-12 text-right">Apogée</span>
             </div>
 
           </div>
 
-          {/* Col 2: Phase Lunaire - Gibbeuse */}
+          {/* Col 2: Phase Lunaire */}
           <div
             id="widget-moon-phase"
-            className="flex flex-col items-center justify-between p-4 rounded-3xl text-center"
+            className="flex flex-col items-center justify-center p-5 rounded-3xl text-center relative overflow-hidden"
             style={{
-              background: "linear-gradient(90deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)",
-              backdropFilter: "blur(2px)",
-              border: "1px solid rgba(255,255,255,0.05)"
+              background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
             }}
           >
-            <span className="text-xs text-[var(--text-tertiary)] opacity-80 mt-2">Phase lunaire</span>
+            {/* Phase Icon Visual */}
+            <div className="mb-6 flex gap-3 opacity-40">
+              <div className="w-3 h-3 rounded-full border border-white"></div>
+              <div className="w-4 h-4 rounded-full border border-white scale-125"></div>
+              <div className="w-3 h-3 rounded-full border border-white"></div>
+            </div>
+            {/* Main Active Phase Halo */}
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-[var(--rich-yellow)] opacity-5 blur-2xl rounded-full pointer-events-none"></div>
 
-            <div className="flex items-center justify-center gap-3 my-2">
-              <div className="w-4 h-8 bg-[var(--text-tertiary)] opacity-20 rounded-l-full"></div>
-              <div className="w-6 h-10 bg-[var(--text-tertiary)] opacity-40 rounded-l-full border-r border-black/20"></div>
-              <div className="relative w-14 h-14">
-                <div className="absolute inset-0 border border-dashed border-[var(--accent-500)] rounded-full animate-spin opacity-50"></div>
-                <div className="absolute inset-2 bg-[var(--rich-yellow)] rounded-full shadow-[0_0_20px_rgba(246,174,49,0.5)] flex items-center justify-center overflow-hidden">
-                  <div className="w-full h-full bg-[var(--background-900)] rounded-full translate-x-1/3 scale-90"></div>
-                  <div className="absolute inset-0 bg-[var(--rich-yellow)] rounded-full mix-blend-overlay"></div>
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-[var(--text-tertiary)] opacity-40"></div>
-              <div className="w-4 h-8 bg-[var(--text-tertiary)] opacity-20 rounded-r-full"></div>
+            <div className="w-16 h-16 rounded-full border-2 border-[var(--rich-yellow)] shadow-[0_0_20px_rgba(246,174,49,0.3)] flex items-center justify-center mb-6 relative z-10">
+              <div className="w-full h-full rounded-full bg-gradient-to-tr from-[var(--rich-yellow)] to-[var(--background-800)] opacity-80"></div>
             </div>
 
-            <div className="mb-2">
-              <h3 className="title-med text-[var(--text-primary)] leading-tight">
-                Gibbeuse <br /> décroissante
+            <div className="space-y-1 z-10">
+              <span className="para-lit text-[var(--text-tertiary)] tracking-wider">Phase lunaire</span>
+              <h3 className="title-lit text-[var(--text-primary)] leading-tight capitalize max-w-[120px] mx-auto">
+                {lunarData?.phase_name ?? "Chargement..."}
               </h3>
             </div>
           </div>
@@ -127,83 +225,79 @@ export default function DashboardPage() {
         </section>
 
         {/* ZONE C: Astro Cards */}
-        <section id="zone-c-astro-cards" className="grid grid-cols-2 gap-3 h-auto mt-6 w-full">
+        <section id="zone-c-astro-cards" className="grid grid-cols-2 gap-3 mt-6 w-full">
 
           {/* Widget: Signe Lunaire */}
           <div
-            id="card-lunar-sign"
-            className="col-span-1 flex flex-col items-center justify-center p-4 rounded-3xl text-center aspect-square relative overflow-hidden"
+            id="widget-zodiac"
+            className="col-span-1 flex flex-col items-center justify-center p-5 rounded-3xl relative overflow-hidden aspect-square"
             style={{
-              background: "linear-gradient(135deg, rgba(28, 48, 57, 0.6) 0%, rgba(28, 48, 57, 0.9) 100%)",
-              backdropFilter: "blur(4px)",
-              border: "1px solid rgba(255,255,255,0.05)"
+              background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
             }}
           >
-            <div className="mb-2 relative">
-              <div className="absolute inset-0 bg-[var(--accent-500)] blur-xl opacity-20 rounded-full"></div>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[var(--accent-500)] relative z-10 drop-shadow-[0_0_8px_rgba(246,174,49,0.5)]">
-                <path d="M7 6C7 4.89543 7.89543 4 9 4C10.1046 4 11 4.89543 11 6V12C11 12 11 13 12 13C13 13 13 12 13 12V6C13 4.89543 13.8954 4 15 4C16.1046 4 17 4.89543 17 6V12C17 14.2091 18.7909 16 21 16V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M5 6V16C5 16 5 18 2 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M21 16L23 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M21 16L19 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+            <div className="absolute top-3 right-3 text-[var(--accent-500)] opacity-60">
+              <Icon icon="solar:star-bold-duotone" width="14" />
             </div>
-            <div className="space-y-1">
-              <span className="text-xs font-body text-[var(--text-tertiary)] tracking-wide">Lune en</span>
-              <h3 className="text-2xl font-heading text-[var(--text-primary)] leading-none">Scorpion</h3>
+
+            <div className="flex flex-col items-center gap-2">
+              <Icon icon="mdi:zodiac-scorpio" width="48" height="48" className="text-[var(--rich-yellow)] drop-shadow-[0_0_8px_rgba(246,174,49,0.3)]" />
+
+              <div className="text-center">
+                <span className="para-lit text-[var(--text-secondary)] block mb-0.5">Lune en</span>
+                <h3 className="title-lit text-[var(--text-primary)] capitalize">
+                  {lunarData?.moon_zodiac_sign ?? "-"}
+                </h3>
+              </div>
             </div>
           </div>
 
           {/* Widgets: Element & Node */}
-          <div className="col-span-1 flex flex-col gap-3">
-            <div
-              id="card-element"
-              className="flex items-center justify-between px-4 py-3 rounded-2xl flex-1 relative overflow-hidden"
-              style={{
-                background: "linear-gradient(90deg, rgba(28, 48, 57, 0.6) 0%, rgba(28, 48, 57, 0.9) 100%)",
-                backdropFilter: "blur(4px)",
+          <div className="col-span-1 flex flex-col gap-3 h-full justify-between">
 
+            {/* Élément */}
+            <div
+              className="flex-1 rounded-3xl p-4 flex items-center justify-between relative overflow-hidden"
+              style={{
+                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               <div className="flex flex-col items-start z-10">
-                <span className="text-[10px] font-body text-[var(--text-secondary)]">Élément</span>
-                <span className="text-lg font-heading text-[var(--text-primary)]">Feu</span>
+                <span className="para-lit text-[var(--text-tertiary)] mb-0.5">Élément</span>
+                <span className="para-big text-[var(--text-primary)] capitalize">
+                  {lunarData?.moon_element ?? "-"}
+                </span>
               </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-[var(--rich-pink)] blur-lg opacity-30 rounded-full"></div>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-[var(--rich-pink)] relative z-10 drop-shadow-[0_0_5px_rgba(255,43,124,0.6)]">
-                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 17C12.3807 17 13.5 15.8807 13.5 14.5C13.5 13.1193 12.3807 12 11 12C9.61929 12 8.5 13.1193 8.5 14.5Z" fill="currentColor" fillOpacity="0.4" />
-                  <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" strokeWidth="0" />
-                  <path d="M10 18.5C6.5 15.5 7 10 12 3C15 8 18 13 14 18.5C13 19.5 10 19.5 10 18.5Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="currentColor" fillOpacity="0.2" />
-                </svg>
+              <div>
+                <Icon icon="mdi:fire" width="24" className="text-[var(--rich-pink)] drop-shadow-[0_0_8px_var(--rich-pink)]" />
               </div>
             </div>
 
+            {/* Noeud Lunaire */}
             <div
-              id="card-node"
-              className="flex items-center justify-between px-4 py-3 rounded-2xl flex-1 relative overflow-hidden"
+              className="flex-1 rounded-3xl p-4 flex items-center justify-between relative overflow-hidden"
               style={{
-                background: "linear-gradient(90deg, rgba(28, 48, 57, 0.6) 0%, rgba(28, 48, 57, 0.9) 100%)",
-                backdropFilter: "blur(4px)",
-
+                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               <div className="flex flex-col items-start z-10">
-                <span className="text-[10px] font-body text-[var(--text-secondary)]">Noeud</span>
-                <span className="text-sm font-heading text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[80px]">Capricorne</span>
+                <span className="para-lit text-[var(--text-tertiary)] mb-0.5">Noeud</span>
+                <span className="para-big text-[var(--text-primary)] capitalize">
+                  {lunarData?.lunar_node_sign ?? "-"}
+                </span>
               </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-[var(--accent-500)] blur-lg opacity-20 rounded-full"></div>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-[var(--accent-500)] relative z-10">
-                  <path d="M17 7V17C17 19 14 19 14 17V12C14 10 12 10 12 12V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 15C12 17.5 10 18 7 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M15 15C17 17.5 20 17 21 14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <circle cx="20.5" cy="14" r="1.5" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
+              <div>
+                <Icon icon="mdi:zodiac-capricorn" width="24" className="text-[var(--rich-yellow)] opacity-80" />
               </div>
             </div>
+
           </div>
-
         </section>
 
         {/* ZONE D: Actions & Separator */}
@@ -233,6 +327,6 @@ export default function DashboardPage() {
         </section>
 
       </main>
-    </div>
+    </div >
   );
 }

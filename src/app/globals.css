@@ -22,7 +22,8 @@
   /* Headings, Main text */
   --text-secondary: #cdbcae;
   /* Subtitles */
-  --text-tertiary: #969491;
+  --text-tertiary: #5C7C8A;
+
   /* Muted text */
   --text-disabled: #939393;
 
@@ -66,6 +67,9 @@
 body {
   background-color: var(--background-900);
   color: var(--text-primary);
+  /* Typography Mappings to Next.js Fonts */
+  --font-heading: var(--font-skranji);
+  --font-body: var(--font-league-spartan);
   font-family: var(--font-league-spartan), sans-serif;
 }
 
@@ -78,40 +82,72 @@ h6 {
   font-family: var(--font-skranji), serif;
 }
 
-/* --- Figma Typography Classes --- */
+/* Typography Utilities (Design System Mapping) */
 
-/* /title_med: Skranji, 22px */
+/* Frames/title_big */
+.title-big {
+  font-family: var(--font-skranji);
+  font-weight: 400;
+  font-size: 32px;
+  letter-spacing: 0;
+}
+
+/* Frames/title_med */
 .title-med {
   font-family: var(--font-skranji);
-  font-size: 22px;
-  line-height: 1;
   font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0;
 }
 
-/* /title_lit: Skranji, 18px */
+/* Frames/title_lit */
 .title-lit {
   font-family: var(--font-skranji);
-  font-size: 24px;
-  /* Ajusté visuellement pour matcher "2€/mois" */
-  line-height: 1;
   font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0;
 }
 
-/* /para: League Spartan, 14px */
-.para {
-  font-family: var(--font-league-spartan);
-  font-size: 14px;
-  line-height: 1.2;
-  font-weight: 400;
-}
-
-/* /para_big: League Spartan, 16px */
+/* Frames/para_big */
 .para-big {
   font-family: var(--font-league-spartan);
-  font-size: 16px;
-  line-height: 1.2;
   font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 0;
 }
+
+/* Frames/para */
+.para {
+  font-family: var(--font-league-spartan);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+/* Frames/para_lit */
+.para-lit {
+  font-family: var(--font-league-spartan);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+/* Frames/legend */
+.legend {
+  font-family: var(--font-league-spartan);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+/* ui_button_text helper class */
+.ui-button-text {
+  font-family: var(--font-league-spartan);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
 
 /* --- Animations --- */
 @keyframes spin {
@@ -195,12 +231,12 @@ h6 {
   background: var(--accent_gradiant);
   box-shadow: 0 2px 2px 0 rgba(24, 39, 46, 0.40), 0 8px 32px 0 rgba(246, 174, 49, 0.60), 0 2px 1px 0 rgba(244, 239, 235, 0.50) inset, 0 -2px 1px 0 rgba(24, 39, 46, 0.50) inset;
 
-  /* Text */
+  /* Typography: ui_button_text */
   color: var(--accent-text-on-900);
   text-align: center;
-  font-family: var(--font-heading);
-  /* Supposed "ui_button_text" maps to this or body bold */
+  font-family: var(--font-league-spartan);
   font-weight: 700;
+  font-size: 16px;
   cursor: pointer;
   transition: transform 0.2s ease, filter 0.2s ease;
 }
@@ -227,16 +263,15 @@ h6 {
   gap: var(--sizes-s, 8px);
   border-radius: var(--sizes-m, 16px);
   border: 1px solid #F1BA5B;
-  /* var(--accent_gradiant) as border color usually means the solid color fallback or specific hex */
   background: var(--background-800);
   box-shadow: 0 2px 1px 0 rgba(244, 239, 235, 0.20) inset, 0 -2px 1px 0 rgba(24, 39, 46, 0.20) inset;
 
-  /* Text */
+  /* Typography: ui_button_text */
   color: var(--text-primary);
-  /* Assuming white text for secondary on dark bg */
   text-align: center;
-  font-family: var(--font-heading);
+  font-family: var(--font-league-spartan);
   font-weight: 700;
+  font-size: 16px;
   cursor: pointer;
   transition: transform 0.2s ease;
 }

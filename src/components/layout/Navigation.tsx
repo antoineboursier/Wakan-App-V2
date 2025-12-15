@@ -40,11 +40,11 @@ export function Navigation() {
 
     return (
         // Conteneur global fixe en bas (positionne la barre mais laisse passer les clics autour)
-        <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-2 pointer-events-none">
+        <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
 
             {/* La TabBar elle-même (interactive) */}
             <nav
-                className="pointer-events-auto flex items-start p-[8px] gap-[4px] rounded-[16px] w-full max-w-[800px] transition-all"
+                className="pointer-events-auto flex items-start p-[8px] gap-[4px] rounded-[16px] w-full max-w-md transition-all"
                 style={{
                     // Gradient spécifique demandé
                     background: "linear-gradient(90deg, var(--background-800, #1C3039) 0%, #365C6E 100%)",
