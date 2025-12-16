@@ -7,11 +7,14 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Separator } from "@/components/ui/Separator";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ZodiacProfileCard } from "@/components/profile/ZodiacProfileCard";
+import { PremiumCard } from "@/components/ui/PremiumCard";
+import { PageBackground } from "@/components/layout/PageBackground";
 
 export default function ProfilPage() {
     return (
-        <div className="min-h-screen bg-[var(--background-900)] text-[var(--text-primary)] font-body pb-32">
-            <div className="pt-8 px-4 flex flex-col items-center max-w-md mx-auto w-full">
+        <div className="min-h-screen text-[var(--text-primary)] font-body pb-32 relative">
+            <PageBackground imageSrc="/backgrounds/astres.png" />
+            <div className="pt-8 px-4 flex flex-col items-center max-w-md mx-auto w-full relative z-10">
 
                 {/* Header: Vignette + Nom */}
                 <ProfileHeader
@@ -34,27 +37,14 @@ export default function ProfilPage() {
                     </button>
                 </div>
 
+                <Separator className="my-4" />
+
+                {/* Accessibilité Premium (Composant) */}
                 <div className="w-full mt-6">
-                    <Separator />
+                    <PremiumCard variant="active" />
                 </div>
 
-                {/* Accessibilité Premium (Mock) */}
-                <div className="w-full mt-6 p-4 rounded-2xl bg-gradient-to-r from-[var(--background-800)] to-[var(--background-700)] border border-[var(--accent-700)] shadow-[0_4px_20px_rgba(241,186,91,0.1)] flex items-center justify-between cursor-pointer hover:brightness-110 transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[var(--accent-900)] flex items-center justify-center text-[var(--background-900)] shadow-lg">
-                            <Icon icon="solar:crown-star-bold" className="w-6 h-6" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="para-big text-[var(--text-primary)] font-bold">Wakan Premium</span>
-                            <span className="para-lit text-[var(--text-secondary)]">Accès illimité actif</span>
-                        </div>
-                    </div>
-                    <Icon icon="solar:alt-arrow-right-linear" className="text-[var(--text-tertiary)] w-6 h-6" />
-                </div>
-
-                <div className="w-full mt-6">
-                    <Separator />
-                </div>
+                <Separator className="my-4" />
 
                 {/* Zodiac Profile */}
                 <div className="w-full mt-2">
@@ -67,9 +57,7 @@ export default function ProfilPage() {
                     />
                 </div>
 
-                <div className="w-full mt-8">
-                    <Separator />
-                </div>
+                <Separator className="my-8" />
 
                 {/* Footer Actions */}
                 <div className="w-full flex flex-col gap-4 mt-4 items-center">

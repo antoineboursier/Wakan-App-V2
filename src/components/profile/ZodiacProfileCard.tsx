@@ -1,4 +1,5 @@
 import React from 'react';
+import { GlassCard } from '../ui/GlassCard';
 
 interface ZodiacProfileProps {
     signName: string;
@@ -10,13 +11,7 @@ interface ZodiacProfileProps {
 
 export function ZodiacProfileCard({ signName, decan, ascendant, element, iconUrl }: ZodiacProfileProps) {
     return (
-        <div
-            className="w-full rounded-2xl p-6 flex flex-col items-center gap-4 relative overflow-hidden"
-            style={{
-                background: "linear-gradient(145deg, var(--background-800), var(--background-900))",
-                border: "1px solid var(--background-500)",
-            }}
-        >
+        <GlassCard className="w-full p-6 flex flex-col items-center gap-4">
             {/* Header / Title */}
             <div className="w-full flex justify-between items-center border-b border-[var(--background-500)] pb-4 mb-2">
                 <span className="para-big text-[var(--text-primary)]">Profil Zodiacal</span>
@@ -59,6 +54,6 @@ export function ZodiacProfileCard({ signName, decan, ascendant, element, iconUrl
                     </div>
                 </div>
             </div>
-        </div>
+        </GlassCard>
     );
 }

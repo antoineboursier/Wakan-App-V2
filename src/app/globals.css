@@ -65,7 +65,7 @@
 }
 
 body {
-  background-color: var(--background-900);
+  background-color: var(--background-800);
   color: var(--text-primary);
   /* Typography Mappings to Next.js Fonts */
   --font-heading: var(--font-skranji);
@@ -87,7 +87,6 @@ h6 {
 /* Frames/title_big */
 .title-big {
   font-family: var(--font-skranji);
-  font-weight: 400;
   font-size: 32px;
   letter-spacing: 0;
 }
@@ -95,7 +94,6 @@ h6 {
 /* Frames/title_med */
 .title-med {
   font-family: var(--font-skranji);
-  font-weight: 400;
   font-size: 22px;
   letter-spacing: 0;
 }
@@ -103,7 +101,6 @@ h6 {
 /* Frames/title_lit */
 .title-lit {
   font-family: var(--font-skranji);
-  font-weight: 400;
   font-size: 18px;
   letter-spacing: 0;
 }
@@ -111,7 +108,6 @@ h6 {
 /* Frames/para_big */
 .para-big {
   font-family: var(--font-league-spartan);
-  font-weight: 400;
   font-size: 16px;
   letter-spacing: 0;
 }
@@ -119,7 +115,6 @@ h6 {
 /* Frames/para */
 .para {
   font-family: var(--font-league-spartan);
-  font-weight: 400;
   font-size: 14px;
   letter-spacing: 0;
 }
@@ -127,7 +122,6 @@ h6 {
 /* Frames/para_lit */
 .para-lit {
   font-family: var(--font-league-spartan);
-  font-weight: 400;
   font-size: 13px;
   letter-spacing: 0;
 }
@@ -135,7 +129,6 @@ h6 {
 /* Frames/legend */
 .legend {
   font-family: var(--font-league-spartan);
-  font-weight: 400;
   font-size: 11px;
   letter-spacing: 0;
 }
@@ -161,12 +154,12 @@ h6 {
 }
 
 .animate-spin {
-  animation: spin 24s linear infinite;
+  animation: spin 32s linear infinite;
   transform-origin: center;
 }
 
 .animate-spin-reverse {
-  animation: spin 24s linear infinite reverse;
+  animation: spin 32s linear infinite reverse;
   transform-origin: center;
 }
 
@@ -288,4 +281,9 @@ h6 {
   color: var(--text-disabled);
   cursor: not-allowed;
   transform: none;
+}
+
+/* --- Effects --- */
+.effect-glow-yellow {
+  filter: drop-shadow(0 2px 16px rgba(246, 223, 49, 0.8));
 }

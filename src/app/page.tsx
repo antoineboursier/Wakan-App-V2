@@ -7,6 +7,7 @@ import { WakanLogo } from "@/components/ui/WakanLogo";
 import { Button } from "@/components/ui/Button";
 import Image from "next/image";
 import { Icon } from "@iconify/react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 
 import { useState, useEffect } from "react";
@@ -54,7 +55,7 @@ export default function DashboardPage() {
     <div className="min-h-screen font-body relative" id="dashboard-page">
 
       {/* --- BACKGROUND SYSTEM --- */}
-      <PageBackground imageSrc="/images/tableau-de-bord-bg.png" alt="Dashboard Cactus Moon" />
+      <PageBackground imageSrc="/backgrounds/home.png" alt="Dashboard Cactus Moon" />
 
       {/* --- HEADER (LOGO) --- */}
       <header className="relative w-full z-20 flex justify-center pt-8" id="dashboard-header">
@@ -123,28 +124,29 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-3">
 
             {/* Widget Cycle Day */}
-            <div
+            <GlassCard
               id="widget-moon-cycle"
-              className="flex flex-col items-center justify-center p-3 rounded-3xl relative overflow-hidden aspect-square"
-              style={{
-                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-              }}
+              className="flex flex-col items-center justify-center p-2 h-40"
             >
-              <div className="relative w-24 h-24 flex items-center justify-center">
+              <div className="relative w-28 h-28 flex items-center justify-center">
                 {/* Dynamique SVG Circle */}
-                <svg className="absolute inset-0 w-full h-full -rotate-90 transform transition-all duration-1000 ease-out" viewBox="0 0 100 100">
+                <svg className="absolute inset-0 w-full h-full overflow-visible -rotate-90 transform transition-all duration-1000 ease-out" viewBox="0 0 100 100">
+                  <defs>
+                    <linearGradient id="cycleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="var(--rich-yellow)" />
+                      <stop offset="100%" stopColor="var(--accent-700)" />
+                    </linearGradient>
+                  </defs>
                   <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="4" fill="none" />
                   <circle
                     cx="50"
                     cy="50"
                     r="40"
-                    stroke="var(--accent-500)"
+                    stroke="url(#cycleGradient)"
                     strokeWidth="4"
                     fill="none"
                     strokeLinecap="round"
+                    className="effect-glow-yellow"
                     style={{
                       strokeDasharray: 251.2,
                       strokeDashoffset: 251.2 - (251.2 * ((lunarData?.cycle_day || 0) / 29.5)),
@@ -160,61 +162,62 @@ export default function DashboardPage() {
                   <span className="para-lit text-[var(--text-secondary)] w-16 leading-3 opacity-80">du cycle lunaire</span>
                 </div>
               </div>
-            </div>
+            </GlassCard>
 
             {/* Widget Distance (Périgée/Apogée) */}
-            <div
+            <GlassCard
               id="widget-distance"
-              className="flex items-center justify-between px-5 py-0 h-16 rounded-[20px] relative overflow-hidden"
-              style={{
-                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-              }}
+              className="flex items-center justify-between px-5 py-0 h-16"
             >
-              <span className="para-lit text-[var(--text-tertiary)] w-12 text-left">Périgée</span>
+              <span className={`para-lit w-12 text-left transition-colors duration-300 ${(lunarData?.perigee_apogee_ratio ?? 0.5) < 0.4 ? 'text-[var(--text-primary)]' : (lunarData?.perigee_apogee_ratio ?? 0.5) > 0.6 ? 'text-[var(--text-tertiary)]' : 'text-[var(--text-secondary)]'}`}>Périgée</span>
 
               {/* Simple Line Slider */}
               <div className="flex-1 mx-2 h-full flex items-center relative">
                 <div className="w-full h-[2px] bg-[var(--text-tertiary)] opacity-20 rounded-full"></div>
                 {/* Dot Indicator */}
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-[var(--rich-yellow)] rounded-full shadow-[0_0_10px_rgba(246,174,49,0.6)] border-2 border-[var(--background-800)] z-10"
-                  style={{ left: "30%" }} // Mock position
+                  id="distance-indicator"
+                  className="absolute top-1/2 w-4 h-4 bg-[rgba(246,174,49,0.4)] rounded-full shadow-[0_0_10px_rgba(246,174,49,0.6)] border border-[var(--rich-yellow)] z-10"
+                  style={{
+                    left: `${(lunarData?.perigee_apogee_ratio ?? 0.5) * 100}%`,
+                    transform: `translate(-50%, -50%) scale(${1.4 - ((lunarData?.perigee_apogee_ratio ?? 0.5) * 0.6)})`,
+                    transition: "left 30ms ease-out, transform 30ms ease-out"
+                  }}
                 ></div>
               </div>
 
-              <span className="para-lit text-[var(--text-tertiary)] w-12 text-right">Apogée</span>
-            </div>
+              <span className={`para-lit w-12 text-right transition-colors duration-300 ${(lunarData?.perigee_apogee_ratio ?? 0.5) > 0.6 ? 'text-[var(--text-primary)]' : (lunarData?.perigee_apogee_ratio ?? 0.5) < 0.4 ? 'text-[var(--text-tertiary)]' : 'text-[var(--text-secondary)]'}`}>Apogée</span>
+            </GlassCard>
 
           </div>
 
           {/* Col 2: Phase Lunaire */}
-          <div
+          <GlassCard
             id="widget-moon-phase"
-            className="flex flex-col items-center justify-center p-5 rounded-3xl text-center relative overflow-hidden"
-            style={{
-              background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-            }}
+            className="flex flex-col items-center justify-center p-5 text-center min-h-[236px]"
           >
+
+            <div className="space-y-1 z-10 duration-300 mb-4">
+              <span className="para-lit text-[var(--text-tertiary)] tracking-wider">Phase lunaire</span>
+            </div>
+
             {/* Carousel Images Phase */}
-            <div className="mb-6 flex items-center justify-center gap-2 h-auto w-full relative">
+            <div className="mb-6 h-[80px] w-full relative flex items-center justify-center perspective-[1000px]">
+
               {(() => {
                 // Mapping phases (ordre cyclique)
                 const phases = [
                   { name: "New Moon", fr: "Nouvelle Lune", file: "nouvellelune.svg" },
-                  { name: "Waxing Crescent", fr: "Premier Croissant", file: "1ercroissant.svg" },
-                  { name: "First Quarter", fr: "Premier Quartier", file: "premierquartier.svg" },
-                  { name: "Waxing Gibbous", fr: "Lune Gibbeuse Croissante", file: "lunegibbeuse1.svg" },
+                  { name: "Waxing Crescent", fr: "Premier croissant", file: "1ercroissant.svg" },
+                  { name: "First Quarter", fr: "Premier quartier", file: "premierquartier.svg" },
+                  { name: "Waxing Gibbous", fr: "Gibbeuse croissante", file: "lunegibbeuse1.svg" },
                   { name: "Full Moon", fr: "Pleine Lune", file: "pleinelune.svg" },
-                  { name: "Waning Gibbous", fr: "Lune Gibbeuse Décroissante", file: "lunegibbeuse2.svg" },
-                  { name: "Last Quarter", fr: "Dernier Quartier", file: "dernierquartier.svg" },
-                  { name: "Waning Crescent", fr: "Dernier Croissant", file: "derniercroissant.svg" }
+                  { name: "Waning Gibbous", fr: "Gibbeuse décroissante", file: "lunegibbeuse2.svg" },
+                  { name: "Last Quarter", fr: "Dernier quartier", file: "dernierquartier.svg" },
+                  { name: "Waning Crescent", fr: "Dernier croissant", file: "derniercroissant.svg" }
                 ];
+
+                const N = phases.length;
 
                 // Normalisation pour trouver l'index actuel
                 const currentPhaseName = lunarData?.phase_name || "Nouvelle Lune";
@@ -223,70 +226,67 @@ export default function DashboardPage() {
                   p.name.toLowerCase() === currentPhaseName.toLowerCase()
                 );
 
-                if (currentIndex === -1) currentIndex = 0; // Fallback
+                if (currentIndex === -1) currentIndex = 0;
 
-                // Calcul des indices voisins (cyclique)
-                const getIndex = (i: number) => (i + phases.length) % phases.length;
+                return phases.map((phase, i) => {
+                  // Calcul de la distance cyclique (shortest path)
+                  // Ex: si current=0. i=1 -> diff=1. i=7 -> diff=-1.
+                  let diff = (i - currentIndex + N) % N;
+                  if (diff > N / 2) diff -= N;
 
-                const indices = [
-                  getIndex(currentIndex - 2),
-                  getIndex(currentIndex - 1),
-                  currentIndex,
-                  getIndex(currentIndex + 1),
-                  getIndex(currentIndex + 2)
-                ];
+                  // On n'affiche que les voisins proches (-2 à +2) pour la performance et le look
+                  // Mais pour l'animation, on les rend tous, on cache juste ceux hors champ via opacity
+                  const isVisible = Math.abs(diff) <= 2;
 
-                // Tailles et marges pour les 5 positions (gauche -> centre -> droite)
-                const sizes = [16, 20, 32, 20, 16]; // Tailles des conteneurs
-                const styles = [
-                  { opacity: 0.3, margin: 'mx-1' },
-                  { opacity: 0.6, margin: 'mx-1' },
-                  { opacity: 1, margin: 'mx-2' }, // Centre
-                  { opacity: 0.6, margin: 'mx-1' },
-                  { opacity: 0.3, margin: 'mx-1' }
-                ];
+                  // Configuration visuelle selon la distance
+                  const isActive = diff === 0;
+                  const scale = isActive ? 1.1 : 1 - (Math.abs(diff) * 0.40);
+                  const opacity = isActive ? 1 : 1 - (Math.abs(diff) * 0.6);
+                  let xOffset = diff * 48;
+                  if (diff > 0) xOffset += 8; // Pousse vers la droite
+                  if (diff < 0) xOffset -= 8; // Pousse vers la gauche
 
-                return indices.map((phaseIdx, i) => (
-                  <div
-                    key={i}
-                    className={`relative flex items-center justify-center transition-all duration-500 ${styles[i].margin}`}
-                    style={{
-                      width: `${sizes[i]}px`,
-                      height: `${sizes[i]}px`
-                    }}
-                  >
-                    {/* Cercle rotatif UNIQUEMENT pour la lune centrale (index 2) */}
-                    {i === 2 && (
-                      <div className="absolute border border-dashed border-[var(--rich-yellow)] rounded-full animate-spin opacity-60 w-[40px] h-[40px] p-[4px]"></div>
-                    )}
+                  const zIndex = 10 - Math.abs(diff);
 
-                    <div className="flex items-center justify-center w-full h-full">
+                  return (
+                    <div
+                      key={phase.name}
+                      className="absolute top-1/2 left-1/2 flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.25,0.8,0.25,1)]"
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        opacity: isVisible ? opacity : 0,
+                        zIndex: zIndex,
+                        transform: `translate(-50%, -50%) translateX(${xOffset}px) scale(${scale})`,
+                        pointerEvents: "none"
+                      }}
+                    >
+                      {/* Cercle rotatif UNIQUEMENT pour la lune centrale active */}
+                      {isActive && (
+                        <div className="absolute border border-dashed border-[var(--accent-900)] rounded-full animate-spin w-[64px] h-[64px]"></div>
+                      )}
+
                       <img
-                        src={`/moon_phases/${phases[phaseIdx].file}`}
-                        alt={phases[phaseIdx].fr}
-                        className="transition-all duration-500 ease-in-out object-contain"
+                        src={`/moon_phases/${phase.file}`}
+                        alt={phase.fr}
+                        className={`object-contain drop-shadow-xl ${isActive ? 'effect-glow-yellow' : ''}`}
                         style={{
-                          maxWidth: "100%",
-                          maxHeight: "100%",
                           width: "100%",
                           height: "100%",
-                          opacity: styles[i].opacity,
-                          filter: i === 2 ? "drop-shadow(0 0 10px rgba(246,174,49,0.5))" : "none"
                         }}
                       />
                     </div>
-                  </div>
-                ));
+                  );
+                });
               })()}
             </div>
 
-            <div className="space-y-1 z-10 transition-opacity duration-300">
-              <span className="para-lit text-[var(--text-tertiary)] tracking-wider">Phase lunaire</span>
-              <h3 className="title-lit text-[var(--text-primary)] leading-tight capitalize max-w-[120px] mx-auto">
+            <div className="space-y-1 z-10 transition-opacity duration-300 h-[3em] flex items-center justify-center">
+              <h3 className="title-lit text-[var(--text-primary)] leading-tight max-w-[120px] mx-auto">
                 {lunarData?.phase_name ?? "Chargement..."}
               </h3>
             </div>
-          </div>
+          </GlassCard>
 
         </section>
 
@@ -294,74 +294,72 @@ export default function DashboardPage() {
         <section id="zone-c-astro-cards" className="grid grid-cols-2 gap-3 mt-6 w-full">
 
           {/* Widget: Signe Lunaire */}
-          <div
+          <GlassCard
             id="widget-zodiac"
-            className="col-span-1 flex flex-col items-center justify-center p-5 rounded-3xl relative overflow-hidden aspect-square"
-            style={{
-              background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-            }}
+            className="col-span-1 flex flex-col items-center justify-center px-4 py-2 h-auto"
           >
-            <div className="absolute top-3 right-3 text-[var(--accent-500)] opacity-60">
-              <Icon icon="solar:star-bold-duotone" width="14" />
-            </div>
-
             <div className="flex flex-col items-center gap-2">
-              <Icon icon="mdi:zodiac-scorpio" width="48" height="48" className="text-[var(--rich-yellow)] drop-shadow-[0_0_8px_rgba(246,174,49,0.3)]" />
+              <img
+                src={`/zodiac/${lunarData?.moon_zodiac_sign?.toLowerCase() ?? 'bélier'}.svg`}
+                alt={lunarData?.moon_zodiac_sign}
+                width={48}
+                height={48}
+                className="effect-glow-yellow"
+              />
 
               <div className="text-center">
-                <span className="para-lit text-[var(--text-secondary)] block mb-0.5">Lune en</span>
-                <h3 className="title-lit text-[var(--text-primary)] capitalize">
+                <span className="para-lit text-[var(--text-secondary)] block">Lune en</span>
+                <h3 className="title-lit text-[var(--text-primary)]">
                   {lunarData?.moon_zodiac_sign ?? "-"}
                 </h3>
               </div>
             </div>
-          </div>
+          </GlassCard>
 
           {/* Widgets: Element & Node */}
-          <div className="col-span-1 flex flex-col gap-3 h-full justify-between">
+          <div className="col-span-1 flex flex-col gap-3 h-auto justify-between">
 
             {/* Élément */}
-            <div
-              className="flex-1 rounded-3xl p-4 flex items-center justify-between relative overflow-hidden"
-              style={{
-                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+            <GlassCard
+              className="flex-1 p-4 flex items-center justify-between"
             >
               <div className="flex flex-col items-start z-10">
-                <span className="para-lit text-[var(--text-tertiary)] mb-0.5">Élément</span>
-                <span className="para-big text-[var(--text-primary)] capitalize">
+                <span className="para-lit text-[var(--text-secondary)]">Élément</span>
+                <span className="para-big text-[var(--text-primary)] capitalize font-bold">
                   {lunarData?.moon_element ?? "-"}
                 </span>
               </div>
               <div>
-                <Icon icon="mdi:fire" width="24" className="text-[var(--rich-pink)] drop-shadow-[0_0_8px_var(--rich-pink)]" />
+                <img
+                  src={`/element/${lunarData?.moon_element ?? 'Feu'}.svg`}
+                  alt={lunarData?.moon_element}
+                  width={24}
+                  height={24}
+                  className="effect-glow-yellow"
+                />
               </div>
-            </div>
+            </GlassCard>
 
             {/* Noeud Lunaire */}
-            <div
-              className="flex-1 rounded-3xl p-4 flex items-center justify-between relative overflow-hidden"
-              style={{
-                background: "linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9))",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+            <GlassCard
+              className="flex-1 p-4 flex items-center justify-between"
             >
               <div className="flex flex-col items-start z-10">
-                <span className="para-lit text-[var(--text-tertiary)] mb-0.5">Noeud</span>
-                <span className="para-big text-[var(--text-primary)] capitalize">
+                <span className="para-lit text-[var(--text-secondary)]">Noeud</span>
+                <span className="para-big text-[var(--text-primary)] capitalize font-bold">
                   {lunarData?.lunar_node_sign ?? "-"}
                 </span>
               </div>
               <div>
-                <Icon icon="mdi:zodiac-capricorn" width="24" className="text-[var(--rich-yellow)] opacity-80" />
+                <img
+                  src={`/zodiac/${lunarData?.lunar_node_sign?.toLowerCase() ?? 'capricorne'}.svg`}
+                  alt={lunarData?.lunar_node_sign}
+                  width={24}
+                  height={24}
+                  className="effect-glow-yellow"
+                />
               </div>
-            </div>
+            </GlassCard>
 
           </div>
         </section>

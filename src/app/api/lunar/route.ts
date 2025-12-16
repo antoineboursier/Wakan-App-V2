@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import * as Astronomy from 'astronomy-engine';
 
 // ============================================================================
 // SECTION 1 : CONFIGURATION & UTILITAIRES
@@ -65,8 +66,10 @@ async function fetchMoonPhase(date: Date) {
             'Waning Crescent': 'Dernier croissant'
         }
 
+        let finalName = phaseMap[phaseEn] ?? phaseEn ?? 'Inconnue';
+
         return {
-            phase_name: phaseMap[phaseEn] ?? phaseEn ?? 'Inconnue',
+            phase_name: finalName,
             illumination_pct: illumination
         }
     } catch (error) {
@@ -137,28 +140,122 @@ async function fetchLastNewMoon(date: Date): Promise<Date> {
 
 
 /**
- * Récupère le signe zodiacal de la Lune et son élément.
- * En V1, on utilise des valeurs stables (mockées) pour tester.
- * En V2, on connectera à une vraie API d'éphémérides (ex: Swiss Ephemeris).
- * 
- * @returns { moonSign, moonElement, lunarNodeSign }
+ * Récupère le signe zodiacal de la Lune et son nœud via l'API NASA JPL Horizons.
+ * - Signe Lunaire : calculé depuis le vecteur position écliptique.
+ * - Nœud Lunaire : extrait des éléments orbitaux (OM = Ascending Node).
  */
-async function fetchMoonAndNodeLongitude(): Promise<{
+async function fetchMoonAndNodeLongitude(date: Date = new Date()): Promise<{
     moonSign: string
     moonElement: string
     lunarNodeSign: string
 }> {
-    // Valeurs temporaires pour V1 (stables, réalistes)
-    const moonLongitude = 210    // ex: Scorpion (210° = 7e signe)
-    const nodeLongitude = 270    // ex: Capricorne (270° = 10e signe)
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+    const startTime = formatDate(date);
+    const stopTime = formatDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
 
-    const moonSign = zodiacFromLongitude(moonLongitude)
-    const lunarNodeSign = zodiacFromLongitude(nodeLongitude)
+    // URLs de l'API Horizons
+    const baseUrl = "https://ssd.jpl.nasa.gov/api/horizons.api";
 
-    return {
-        moonSign,
-        moonElement: zodiacElements[moonSign],
-        lunarNodeSign
+    // 1. Position de la Lune (VECTORS) pour le Signe
+    // COMMAND=301 (Lune), CENTER=@399 (Terre), REF_PLANE=ECLIPTIC
+    const paramsVector = new URLSearchParams({
+        format: "text",
+        COMMAND: "301",
+        OBJ_DATA: "NO",
+        MAKE_EPHEM: "YES",
+        EPHEM_TYPE: "VECTORS",
+        CENTER: "@399",
+        START_TIME: startTime,
+        STOP_TIME: stopTime,
+        STEP_SIZE: "1d",
+        REF_PLANE: "ECLIPTIC",
+        CSV_FORMAT: "YES"
+    });
+
+    // 2. Éléments Orbitaux (ELEMENTS) pour le Nœud (OM)
+    const paramsElements = new URLSearchParams({
+        format: "text",
+        COMMAND: "301",
+        OBJ_DATA: "NO",
+        MAKE_EPHEM: "YES",
+        EPHEM_TYPE: "ELEMENTS",
+        CENTER: "@399",
+        START_TIME: startTime,
+        STOP_TIME: stopTime,
+        STEP_SIZE: "1d",
+        REF_PLANE: "ECLIPTIC",
+        CSV_FORMAT: "YES"
+    });
+
+    try {
+        // Exécution en parallèle avec timeout
+        const fetchWithTimeout = (url: string) => fetch(url, { signal: AbortSignal.timeout(8000) });
+
+        const [resVector, resElements] = await Promise.all([
+            fetchWithTimeout(`${baseUrl}?${paramsVector.toString()}`),
+            fetchWithTimeout(`${baseUrl}?${paramsElements.toString()}`)
+        ]);
+
+        if (!resVector.ok || !resElements.ok) throw new Error("JPL Horizons API Error");
+
+        const txtVector = await resVector.text();
+        const txtElements = await resElements.text();
+
+        // --- Parsing Signe Lunaire ---
+        // On cherche entre $$SOE et $$EOE
+        const vecBlock = txtVector.split("$$SOE")[1]?.split("$$EOE")[0];
+        let moonSign = "Bélier"; // Fallback
+
+        if (vecBlock) {
+            const line = vecBlock.trim().split('\n')[0];
+            const parts = line.split(',');
+            // Selon format Horizons CSV VECTORS : Date, X, Y, Z...
+            // Indices tyipques : 0=JDTDB, 1=Date, 2=X, 3=Y (en UA)
+            const X = parseFloat(parts[2]);
+            const Y = parseFloat(parts[3]);
+
+            if (!isNaN(X) && !isNaN(Y)) {
+                // Calcul Longitude Ecliptique
+                // atan2(y, x) retourne radians entre -PI et PI
+                let lonRad = Math.atan2(Y, X);
+                let lonDeg = lonRad * (180 / Math.PI);
+                if (lonDeg < 0) lonDeg += 360;
+
+                moonSign = zodiacFromLongitude(lonDeg);
+            }
+        }
+
+        // --- Parsing Nœud Lunaire ---
+        // Format CSV Elements : ... EC, QR, IN, OM, W, Tp ...
+        // OM = Longitude of Ascending Node
+        const elBlock = txtElements.split("$$SOE")[1]?.split("$$EOE")[0];
+        let nodeSign = "Capricorne"; // Fallback
+
+        if (elBlock) {
+            const line = elBlock.trim().split('\n')[0];
+            const parts = line.split(',');
+            // Indices typiques ELEMENTS : 0=JDTDB, 1=Date, 2=EC, 3=QR, 4=IN, 5=OM
+            const OM = parseFloat(parts[5]);
+
+            if (!isNaN(OM)) {
+                nodeSign = zodiacFromLongitude(OM);
+            }
+        }
+
+        return {
+            moonSign: moonSign,
+            moonElement: zodiacElements[moonSign] || 'Feu',
+            lunarNodeSign: nodeSign
+        };
+
+    } catch (error) {
+        console.warn("Horizons API failure, using fallback defaults:", error);
+        // Fallback safe (simulé)
+        return {
+            moonSign: 'Scorpion',
+            moonElement: 'Eau',
+            lunarNodeSign: 'Capricorne'
+        };
     }
 }
 
@@ -211,6 +308,48 @@ function zodiacFromLongitude(longitude: number): string {
 function calculateCycleDay(lastNewMoon: Date, today: Date): number {
     const diffMs = today.getTime() - lastNewMoon.getTime()
     return Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1)
+}
+
+/**
+ * Calcule les données de distance lunaire, périgée et apogée.
+ * Utilise astronomy-engine pour la précision.
+ */
+function fetchMoonDistanceAndApsides(date: Date) {
+    const vec = Astronomy.GeoVector(Astronomy.Body.Moon, date, true);
+    // 1 UA = 149,597,870.7 km
+    const distanceKm = Math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z) * 149597870.7;
+
+    // Scan des 40 derniers jours pour trouver le dernier perigee/apogee
+    const startScan = new Date(date.getTime() - 40 * 24 * 3600 * 1000);
+
+    let lastPerigeeDist = 362600;
+    let lastApogeeDist = 405400;
+
+    let iterDate = startScan;
+    for (let i = 0; i < 15; i++) {
+        const apsis = Astronomy.SearchLunarApsis(iterDate);
+        if (!apsis) break;
+        if (apsis.time.date > date) break;
+
+        const v = Astronomy.GeoVector(Astronomy.Body.Moon, apsis.time, true);
+        const dist = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) * 149597870.7;
+
+        if (apsis.kind === 0) lastPerigeeDist = dist;
+        else lastApogeeDist = dist;
+
+        iterDate = new Date(apsis.time.date.getTime() + 24 * 3600 * 1000);
+    }
+
+    const range = lastApogeeDist - lastPerigeeDist;
+    let ratio = range !== 0 ? (distanceKm - lastPerigeeDist) / range : 0.5;
+    ratio = Math.max(0, Math.min(1, ratio));
+
+    return {
+        distanceKm: Math.round(distanceKm),
+        perigeeKm: Math.round(lastPerigeeDist),
+        apogeeKm: Math.round(lastApogeeDist),
+        ratio: Number(ratio.toFixed(4))
+    };
 }
 
 // ============================================================================
@@ -266,7 +405,10 @@ export async function GET(request: Request) {
         moonSign,
         moonElement,
         lunarNodeSign
-    } = await fetchMoonAndNodeLongitude()
+    } = await fetchMoonAndNodeLongitude(targetDateObj)
+
+    // Calculs Périgée / Apogée (Astronomy Engine)
+    const moonDistData = fetchMoonDistanceAndApsides(targetDateObj)
 
     // Étape 3 : Construire le payload pour Supabase
     const payload = {
@@ -277,7 +419,13 @@ export async function GET(request: Request) {
         cycle_day: cycle_day || 1, // Fallback number safe
         moon_zodiac_sign: moonSign || 'Bélier',
         moon_element: moonElement || 'Feu',
-        // lunar_node_sign: lunarNodeSign || 'Capricorne' // COLONNE MANQUANTE EN BDD
+
+        // Données distance
+        moon_distance_km: moonDistData.distanceKm,
+        perigee_distance_km: moonDistData.perigeeKm,
+        apogee_distance_km: moonDistData.apogeeKm,
+        perigee_apogee_ratio: moonDistData.ratio,
+        lunar_node_sign: lunarNodeSign || 'Capricorne'
     }
 
     // DEBUG: Voir ce qu'on envoie

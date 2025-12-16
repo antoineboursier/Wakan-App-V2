@@ -6,11 +6,13 @@ import { Icon } from "@iconify/react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Separator } from "@/components/ui/Separator";
 import { InputField } from "@/components/ui/InputField";
+import { PageBackground } from "@/components/layout/PageBackground";
 
 export default function PersonalInfosPage() {
     return (
-        <div className="min-h-screen bg-[var(--background-900)] text-[var(--text-primary)] font-body pb-32">
-            <div className="pt-8 px-4 flex flex-col items-center max-w-md mx-auto w-full">
+        <div className="min-h-screen text-[var(--text-primary)] font-body pb-32 relative">
+            <PageBackground imageSrc="/backgrounds/astres.png" />
+            <div className="pt-8 px-4 flex flex-col items-center max-w-md mx-auto w-full relative z-10">
 
                 {/* Header Navigation Back */}
                 <div className="w-full flex items-center justify-between mb-6">
@@ -37,9 +39,7 @@ export default function PersonalInfosPage() {
                     />
                 </div>
 
-                <div className="w-full mt-8 mb-8">
-                    <Separator />
-                </div>
+                <Separator className="my-4" />
 
                 {/* Section Astrale */}
                 <div className="w-full flex flex-col gap-6">

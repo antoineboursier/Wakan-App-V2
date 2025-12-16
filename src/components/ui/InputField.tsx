@@ -21,7 +21,7 @@ export function InputField({ label, subtext, icon, className, disabled, ...props
                     flex p-4 items-center gap-1 self-stretch rounded-lg border-2 
                     transition-colors duration-200
                     ${disabled
-                        ? 'border-transparent bg-transparent' // Disabled State
+                        ? 'border-[var(--text-disabled)] bg-transparent' // Disabled State
                         : 'border-[var(--background-500)] bg-[var(--background-900)] focus-within:bg-[var(--background-900)]' // Default & Filled
                     }
                 `}
@@ -36,7 +36,7 @@ export function InputField({ label, subtext, icon, className, disabled, ...props
                     disabled={disabled}
                     className={`
                         flex-1 bg-transparent border-none outline-none 
-                        text-[var(--text-primary)] placeholder-[var(--text-tertiary)] ui-button-text
+                        text-[var(--text-primary)] placeholder-[var(--text-secondary)] para-big
                         truncate
                         disabled:text-[var(--text-disabled)] disabled:placeholder-[var(--text-disabled)]
                     `}
