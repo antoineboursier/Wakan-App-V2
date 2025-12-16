@@ -201,20 +201,86 @@ export default function DashboardPage() {
               boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
             }}
           >
-            {/* Phase Icon Visual */}
-            <div className="mb-6 flex gap-3 opacity-40">
-              <div className="w-3 h-3 rounded-full border border-white"></div>
-              <div className="w-4 h-4 rounded-full border border-white scale-125"></div>
-              <div className="w-3 h-3 rounded-full border border-white"></div>
-            </div>
-            {/* Main Active Phase Halo */}
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-[var(--rich-yellow)] opacity-5 blur-2xl rounded-full pointer-events-none"></div>
+            {/* Carousel Images Phase */}
+            <div className="mb-6 flex items-center justify-center gap-2 h-auto w-full relative">
+              {(() => {
+                // Mapping phases (ordre cyclique)
+                const phases = [
+                  { name: "New Moon", fr: "Nouvelle Lune", file: "nouvellelune.svg" },
+                  { name: "Waxing Crescent", fr: "Premier Croissant", file: "1ercroissant.svg" },
+                  { name: "First Quarter", fr: "Premier Quartier", file: "premierquartier.svg" },
+                  { name: "Waxing Gibbous", fr: "Lune Gibbeuse Croissante", file: "lunegibbeuse1.svg" },
+                  { name: "Full Moon", fr: "Pleine Lune", file: "pleinelune.svg" },
+                  { name: "Waning Gibbous", fr: "Lune Gibbeuse Décroissante", file: "lunegibbeuse2.svg" },
+                  { name: "Last Quarter", fr: "Dernier Quartier", file: "dernierquartier.svg" },
+                  { name: "Waning Crescent", fr: "Dernier Croissant", file: "derniercroissant.svg" }
+                ];
 
-            <div className="w-16 h-16 rounded-full border-2 border-[var(--rich-yellow)] shadow-[0_0_20px_rgba(246,174,49,0.3)] flex items-center justify-center mb-6 relative z-10">
-              <div className="w-full h-full rounded-full bg-gradient-to-tr from-[var(--rich-yellow)] to-[var(--background-800)] opacity-80"></div>
+                // Normalisation pour trouver l'index actuel
+                const currentPhaseName = lunarData?.phase_name || "Nouvelle Lune";
+                let currentIndex = phases.findIndex(p =>
+                  p.fr.toLowerCase() === currentPhaseName.toLowerCase() ||
+                  p.name.toLowerCase() === currentPhaseName.toLowerCase()
+                );
+
+                if (currentIndex === -1) currentIndex = 0; // Fallback
+
+                // Calcul des indices voisins (cyclique)
+                const getIndex = (i: number) => (i + phases.length) % phases.length;
+
+                const indices = [
+                  getIndex(currentIndex - 2),
+                  getIndex(currentIndex - 1),
+                  currentIndex,
+                  getIndex(currentIndex + 1),
+                  getIndex(currentIndex + 2)
+                ];
+
+                // Tailles et marges pour les 5 positions (gauche -> centre -> droite)
+                const sizes = [16, 20, 32, 20, 16]; // Tailles des conteneurs
+                const styles = [
+                  { opacity: 0.3, margin: 'mx-1' },
+                  { opacity: 0.6, margin: 'mx-1' },
+                  { opacity: 1, margin: 'mx-2' }, // Centre
+                  { opacity: 0.6, margin: 'mx-1' },
+                  { opacity: 0.3, margin: 'mx-1' }
+                ];
+
+                return indices.map((phaseIdx, i) => (
+                  <div
+                    key={i}
+                    className={`relative flex items-center justify-center transition-all duration-500 ${styles[i].margin}`}
+                    style={{
+                      width: `${sizes[i]}px`,
+                      height: `${sizes[i]}px`
+                    }}
+                  >
+                    {/* Cercle rotatif UNIQUEMENT pour la lune centrale (index 2) */}
+                    {i === 2 && (
+                      <div className="absolute border border-dashed border-[var(--rich-yellow)] rounded-full animate-spin opacity-60 w-[40px] h-[40px] p-[4px]"></div>
+                    )}
+
+                    <div className="flex items-center justify-center w-full h-full">
+                      <img
+                        src={`/moon_phases/${phases[phaseIdx].file}`}
+                        alt={phases[phaseIdx].fr}
+                        className="transition-all duration-500 ease-in-out object-contain"
+                        style={{
+                          maxWidth: "100%",
+                          maxHeight: "100%",
+                          width: "100%",
+                          height: "100%",
+                          opacity: styles[i].opacity,
+                          filter: i === 2 ? "drop-shadow(0 0 10px rgba(246,174,49,0.5))" : "none"
+                        }}
+                      />
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
 
-            <div className="space-y-1 z-10">
+            <div className="space-y-1 z-10 transition-opacity duration-300">
               <span className="para-lit text-[var(--text-tertiary)] tracking-wider">Phase lunaire</span>
               <h3 className="title-lit text-[var(--text-primary)] leading-tight capitalize max-w-[120px] mx-auto">
                 {lunarData?.phase_name ?? "Chargement..."}
