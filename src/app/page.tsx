@@ -23,7 +23,7 @@ export default function DashboardPage() {
         const dateStr = selectedDate.toISOString().split('T')[0];
 
         // Appeler l'API avec le paramètre date
-        const res = await fetch(`/api/lunar?date=${dateStr}`);
+        const res = await fetch(`/api/dashboard?date=${dateStr}`);
         if (res.ok) {
           const data = await res.json();
           setLunarData(data);
@@ -48,7 +48,7 @@ export default function DashboardPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
+    return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
   };
 
   return (
@@ -198,7 +198,7 @@ export default function DashboardPage() {
           >
 
             <div className="space-y-1 z-10 duration-300 mb-4">
-              <span className="para-lit text-[var(--text-tertiary)] tracking-wider">Phase lunaire</span>
+              <span className="para-lit text-[var(--text-secondary)] tracking-wider">Phase lunaire</span>
             </div>
 
             {/* Carousel Images Phase */}
@@ -291,7 +291,7 @@ export default function DashboardPage() {
         </section>
 
         {/* ZONE C: Astro Cards */}
-        <section id="zone-c-astro-cards" className="grid grid-cols-2 gap-3 mt-6 w-full">
+        <section id="zone-c-astro-cards" className="grid grid-cols-2 gap-3 mt-6 w-full pb-4">
 
           {/* Widget: Signe Lunaire */}
           <GlassCard
@@ -317,11 +317,11 @@ export default function DashboardPage() {
           </GlassCard>
 
           {/* Widgets: Element & Node */}
-          <div className="col-span-1 flex flex-col gap-3 h-auto justify-between">
+          <div className="col-span-1 flex flex-col gap-3 h-full">
 
             {/* Élément */}
             <GlassCard
-              className="flex-1 p-4 flex items-center justify-between"
+              className="w-full p-4 flex items-center justify-between"
             >
               <div className="flex flex-col items-start z-10">
                 <span className="para-lit text-[var(--text-secondary)]">Élément</span>
@@ -342,21 +342,43 @@ export default function DashboardPage() {
 
             {/* Noeud Lunaire */}
             <GlassCard
-              className="flex-1 p-4 flex items-center justify-between"
+              className="w-full p-4 flex flex-col justify-center gap-1.5 flex-1"
             >
-              <div className="flex flex-col items-start z-10">
-                <span className="para-lit text-[var(--text-secondary)]">Noeud</span>
-                <span className="para-big text-[var(--text-primary)] capitalize font-bold">
-                  {lunarData?.lunar_node_sign ?? "-"}
-                </span>
-              </div>
-              <div>
+              <span className="para-lit text-[var(--text-secondary)] mb-1">Noeuds Lunaires</span>
+
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-baseline gap-1 ">
+                  <span className="para-lit text-[var(--text-secondary)] text-[11px] tracking-wider opacity-80">
+                    Nord :
+                  </span>
+                  <span className="para-med text-[var(--text-primary)] capitalize font-bold text-sm">
+                    {lunarData?.lunar_node_north_sign ?? lunarData?.lunar_node_sign ?? "-"}
+                  </span>
+                </div>
                 <img
-                  src={`/zodiac/${lunarData?.lunar_node_sign?.toLowerCase() ?? 'capricorne'}.svg`}
-                  alt={lunarData?.lunar_node_sign}
-                  width={24}
-                  height={24}
-                  className="effect-glow-yellow"
+                  src={`/zodiac/${(lunarData?.lunar_node_north_sign ?? lunarData?.lunar_node_sign ?? 'capricorne').toLowerCase()}.svg`}
+                  alt="Nord"
+                  width={20}
+                  height={20}
+                  className="effect-glow-yellow opacity-90"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-1">
+                  <span className="para-lit text-[var(--text-secondary)] text-[11px] tracking-wider opacity-80">
+                    Sud :
+                  </span>
+                  <span className="para-med text-[var(--text-primary)] capitalize font-bold text-sm">
+                    {lunarData?.lunar_node_south_sign ?? "-"}
+                  </span>
+                </div>
+                <img
+                  src={`/zodiac/${(lunarData?.lunar_node_south_sign ?? 'vierge').toLowerCase()}.svg`}
+                  alt="Sud"
+                  width={20}
+                  height={20}
+                  className="effect-glow-yellow opacity-90"
                 />
               </div>
             </GlassCard>

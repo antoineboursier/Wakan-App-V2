@@ -6,10 +6,12 @@ interface ZodiacProfileProps {
     decan: string;
     ascendant: string;
     element: string;
+    northNode?: string;
+    southNode?: string;
     iconUrl: string; // Placeholder for now
 }
 
-export function ZodiacProfileCard({ signName, decan, ascendant, element, iconUrl }: ZodiacProfileProps) {
+export function ZodiacProfileCard({ signName, decan, ascendant, element, northNode, southNode, iconUrl }: ZodiacProfileProps) {
     return (
         <GlassCard className="w-full p-6 flex flex-col items-center gap-4">
             {/* Header / Title */}
@@ -52,6 +54,24 @@ export function ZodiacProfileCard({ signName, decan, ascendant, element, iconUrl
                         <span className="para-lit text-[var(--text-tertiary)]">Élément majoritaire</span>
                         <span className="para-big text-[var(--text-secondary)]">{element}</span>
                     </div>
+
+                    {/* Nœuds Lunaires */}
+                    {(northNode || southNode) && (
+                        <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-[var(--background-500)]/30">
+                            {northNode && (
+                                <div className="flex justify-between items-baseline">
+                                    <span className="para-lit text-[var(--text-tertiary)]">Nœud Nord</span>
+                                    <span className="para text-[var(--text-secondary)]">{northNode}</span>
+                                </div>
+                            )}
+                            {southNode && (
+                                <div className="flex justify-between items-baseline">
+                                    <span className="para-lit text-[var(--text-tertiary)]">Nœud Sud</span>
+                                    <span className="para text-[var(--text-secondary)]">{southNode}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </GlassCard>

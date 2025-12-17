@@ -6,7 +6,7 @@ interface SeparatorProps {
 
 export function Separator({ className = "" }: SeparatorProps) {
     return (
-        <div className={`flex items-center justify-center w-full py-4 ${className}`}>
+        <div className={`flex items-center justify-center w-full py-8 ${className}`}>
             {/* Point gauche */}
             <div className="animate-shrink-grow w-1.5 h-1.5 rounded-full bg-[var(--text-primary)]"></div>
 

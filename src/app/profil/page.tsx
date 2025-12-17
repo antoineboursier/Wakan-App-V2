@@ -53,6 +53,8 @@ export default function ProfilPage() {
                         decan="2ème décan"
                         ascendant="Vierge"
                         element="Vent"
+                        northNode="Poissons"
+                        southNode="Vierge"
                         iconUrl=""
                     />
                 </div>
