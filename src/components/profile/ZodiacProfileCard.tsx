@@ -13,7 +13,14 @@ interface ZodiacProfileProps {
 
 export function ZodiacProfileCard({ signName, decan, ascendant, element, northNode, southNode, iconUrl }: ZodiacProfileProps) {
     return (
-        <GlassCard className="w-full p-6 flex flex-col items-center gap-4">
+        <GlassCard
+            className="w-full p-6 flex flex-col items-center gap-4"
+            style={{
+                background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)'
+            }}
+        >
             {/* Header / Title */}
             <div className="w-full flex justify-between items-center border-b border-[var(--background-500)] pb-4 mb-2">
                 <span className="para-big text-[var(--text-primary)]">Profil Zodiacal</span>

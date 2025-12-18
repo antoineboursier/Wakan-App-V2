@@ -9,7 +9,7 @@ interface PageBackgroundProps {
 export function PageBackground({ imageSrc, alt = "Background" }: PageBackgroundProps) {
     return (
         <div
-            className="fixed inset-0 z-0 select-none pointer-events-none"
+            className="fixed inset-0 z-0 select-none pointer-events-none h-[100dvh]"
             id="page-background-container"
             aria-hidden="true"
         >

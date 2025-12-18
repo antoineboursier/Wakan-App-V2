@@ -11,7 +11,14 @@ export function PremiumCard({ variant = 'sales' }: PremiumCardProps) {
 
     if (variant === 'active') {
         return (
-            <GlassCard className="p-4 flex items-center justify-between cursor-pointer hover:brightness-110 transition-all border-[#f1ba5b] shadow-[0_4px_20px_rgba(241,186,91,0.1)]">
+            <GlassCard
+                className="p-4 flex items-center justify-between cursor-pointer hover:brightness-110 transition-all border-[#f1ba5b] shadow-[0_4px_20px_rgba(241,186,91,0.1)]"
+                style={{
+                    background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)'
+                }}
+            >
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[var(--accent-900)] flex items-center justify-center text-[var(--background-900)] shadow-lg">
                         <Icon icon="solar:crown-star-bold" className="w-6 h-6" />

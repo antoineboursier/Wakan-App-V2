@@ -40,7 +40,7 @@ export function Navigation() {
 
     return (
         // Conteneur global fixe en bas (positionne la barre mais laisse passer les clics autour)
-        <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+        <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-2 pointer-events-none">
 
             {/* La TabBar elle-même (interactive) */}
             <nav
@@ -64,10 +64,10 @@ export function Navigation() {
                             className={`flex flex-col items-center flex-1 py-1 gap-1 transition-opacity duration-200 ${activeClass}`}
                             style={{ padding: "4px 0" }} // Padding explicite Figma zones de clic
                         >
-                            <div className="relative p-1">
+                            <div className="relative">
                                 <Icon
                                     icon={item.icon}
-                                    className="text-[var(--text-primary)] w-7 h-7"
+                                    className="text-[var(--text-primary)] w-6 h-6"
                                 />
 
                                 {/* Notification Dot (Tirages) */}
@@ -80,7 +80,7 @@ export function Navigation() {
                             </div>
 
                             <span
-                                className="text-[13px] font-body text-[var(--text-secondary)] text-center font-normal leading-[120%]"
+                                className="para-lit text-[var(--text-secondary)] text-center"
                             >
                                 {item.name}
                             </span>

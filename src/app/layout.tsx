@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Skranji, League_Spartan } from "next/font/google";
 import { Navigation } from "@/components/layout/Navigation";
+import { TransitionProvider } from "@/components/layout/TransitionProvider";
 import "./globals.css";
 
 const skranji = Skranji({
@@ -28,8 +29,10 @@ export default function RootLayout({
     <html lang="fr" className="dark">
       <body className={`${skranji.variable} ${leagueSpartan.variable} antialiased min-h-screen bg-[var(--background-900)] text-[var(--text-primary)] font-body`}>
         <Navigation />
-        <main className="pb-24 h-full min-h-screen relative overflow-x-hidden">
-          {children}
+        <main className="pb-28 h-full min-h-screen relative overflow-x-hidden">
+          <TransitionProvider>
+            {children}
+          </TransitionProvider>
         </main>
       </body>
     </html>

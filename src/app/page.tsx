@@ -58,14 +58,14 @@ export default function DashboardPage() {
       <PageBackground imageSrc="/backgrounds/home.png" alt="Dashboard Cactus Moon" />
 
       {/* --- HEADER (LOGO) --- */}
-      <header className="relative w-full z-20 flex justify-center pt-8" id="dashboard-header">
+      <header className="relative w-full z-20 flex justify-center pt-4" id="dashboard-header">
         <h1 className="sr-only">Wakan - Tableau de bord</h1>
         {/* Composant Logo Animé */}
         <WakanLogo />
       </header>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="relative z-10 flex flex-col items-center px-4 w-full max-w-md mx-auto pb-4" id="dashboard-main-content">
+      <div id="dashboard-main" className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-6 px-4 pb-24">
 
         {/* --- DATE SELECTOR --- */}
         <div className="w-full flex items-center justify-between mb-6 px-1">
@@ -127,6 +127,11 @@ export default function DashboardPage() {
             <GlassCard
               id="widget-moon-cycle"
               className="flex flex-col items-center justify-center p-2 h-40"
+              style={{
+                background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)'
+              }}
             >
               <div className="relative w-28 h-28 flex items-center justify-center">
                 {/* Dynamique SVG Circle */}
@@ -168,6 +173,11 @@ export default function DashboardPage() {
             <GlassCard
               id="widget-distance"
               className="flex items-center justify-between px-5 py-0 h-16"
+              style={{
+                background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)'
+              }}
             >
               <span className={`para-lit w-12 text-left transition-colors duration-300 ${(lunarData?.perigee_apogee_ratio ?? 0.5) < 0.4 ? 'text-[var(--text-primary)]' : (lunarData?.perigee_apogee_ratio ?? 0.5) > 0.6 ? 'text-[var(--text-tertiary)]' : 'text-[var(--text-secondary)]'}`}>Périgée</span>
 
@@ -195,6 +205,11 @@ export default function DashboardPage() {
           <GlassCard
             id="widget-moon-phase"
             className="flex flex-col items-center justify-center p-5 text-center min-h-[236px]"
+            style={{
+              background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)'
+            }}
           >
 
             <div className="space-y-1 z-10 duration-300 mb-4">
@@ -297,6 +312,11 @@ export default function DashboardPage() {
           <GlassCard
             id="widget-zodiac"
             className="col-span-1 flex flex-col items-center justify-center px-4 py-2 h-auto"
+            style={{
+              background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)'
+            }}
           >
             <div className="flex flex-col items-center gap-2">
               <img
@@ -322,6 +342,11 @@ export default function DashboardPage() {
             {/* Élément */}
             <GlassCard
               className="w-full p-4 flex items-center justify-between"
+              style={{
+                background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)'
+              }}
             >
               <div className="flex flex-col items-start z-10">
                 <span className="para-lit text-[var(--text-secondary)]">Élément</span>
@@ -343,6 +368,11 @@ export default function DashboardPage() {
             {/* Noeud Lunaire */}
             <GlassCard
               className="w-full p-4 flex flex-col justify-center gap-1.5 flex-1"
+              style={{
+                background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)'
+              }}
             >
               <span className="para-lit text-[var(--text-secondary)] mb-1">Noeuds Lunaires</span>
 
@@ -412,7 +442,7 @@ export default function DashboardPage() {
           <PremiumCard />
         </section>
 
-      </main>
+      </div>
     </div >
   );
 }

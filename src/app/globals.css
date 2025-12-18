@@ -89,6 +89,7 @@ h6 {
   font-family: var(--font-skranji);
   font-size: 32px;
   letter-spacing: 0;
+  line-height: 100%;
 }
 
 /* Frames/title_med */
@@ -96,6 +97,7 @@ h6 {
   font-family: var(--font-skranji);
   font-size: 22px;
   letter-spacing: 0;
+  line-height: 100%;
 }
 
 /* Frames/title_lit */
@@ -103,6 +105,7 @@ h6 {
   font-family: var(--font-skranji);
   font-size: 18px;
   letter-spacing: 0;
+  line-height: 100%;
 }
 
 /* Frames/para_big */
@@ -110,6 +113,7 @@ h6 {
   font-family: var(--font-league-spartan);
   font-size: 16px;
   letter-spacing: 0;
+  line-height: 120%;
 }
 
 /* Frames/para */
@@ -117,6 +121,7 @@ h6 {
   font-family: var(--font-league-spartan);
   font-size: 14px;
   letter-spacing: 0;
+  line-height: 120%;
 }
 
 /* Frames/para_lit */
@@ -124,6 +129,7 @@ h6 {
   font-family: var(--font-league-spartan);
   font-size: 13px;
   letter-spacing: 0;
+  line-height: 120%;
 }
 
 /* Frames/legend */
@@ -131,6 +137,7 @@ h6 {
   font-family: var(--font-league-spartan);
   font-size: 11px;
   letter-spacing: 0;
+  line-height: 120%;
 }
 
 /* ui_button_text helper class */

@@ -24,7 +24,7 @@ export function Button({
 
     return (
         <button
-            className={`${baseClass} ${className || ""}`}
+            className={`${baseClass} ${className || "w-fit"}`}
             disabled={disabled}
             {...props}
         >
