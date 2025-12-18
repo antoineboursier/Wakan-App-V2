@@ -65,7 +65,7 @@ export default function DashboardPage() {
       </header>
 
       {/* --- MAIN CONTENT --- */}
-      <div id="dashboard-main" className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-6 px-4 pb-24">
+      <div id="dashboard-main" className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-6 px-4">
 
         {/* --- DATE SELECTOR --- */}
         <div className="w-full flex items-center justify-between mb-6 px-1">

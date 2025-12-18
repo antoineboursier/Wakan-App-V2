@@ -11,8 +11,18 @@ interface DrawIntroCardProps {
     onDrawThree: () => void;
     canDrawFree: boolean;
     isPremium: boolean;
-    isLoading?: boolean;
     imageUrl?: string;
+    onResetLimit?: () => void;
+
+    // New Config Props
+    btnMainLabel?: string;
+    btnMainIcon?: string;
+    btnSecondLabel?: string;
+    btnSecondIcon?: string;
+    btnSecondEnabled?: boolean;
+    isMainPremium?: boolean;
+    isSecondBtnPremium?: boolean;
+    isLoading?: boolean;
 }
 
 export function DrawIntroCard({
@@ -23,7 +33,20 @@ export function DrawIntroCard({
     canDrawFree,
     isPremium,
     imageUrl,
+    onResetLimit,
+    btnMainLabel = "Tirer une carte",
+    btnMainIcon = "mdi:cards-outline",
+    btnSecondLabel = "Tirage complet",
+    btnSecondIcon = "mdi:cards-playing-outline",
+    btnSecondEnabled = false,
+    isMainPremium = false,
+    isSecondBtnPremium = true,
 }: DrawIntroCardProps) {
+    const isMainLocked = !isPremium && isMainPremium;
+    const isMainDisabled = isMainLocked || (!isPremium && !canDrawFree);
+
+    const isSecondLocked = !isPremium && isSecondBtnPremium;
+
     return (
         <GlassCard className="w-full max-w-sm mx-auto p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-[var(--text-tertiary)]">
 
@@ -65,25 +88,27 @@ export function DrawIntroCard({
                         <Button
                             variant="primary"
                             onClick={onDrawOne}
-                            disabled={!canDrawFree && !isPremium}
-                            icon={<Icon icon="ph:heart-fill" width="20" height="20" />}
+                            disabled={isMainDisabled}
+                            icon={isMainLocked ? <Icon icon="mingcute:lock-fill" width="16" /> : <Icon icon={btnMainIcon} width="20" height="20" />}
                             className="" // Hug content (défaut)
                         >
-                            Tirer ma rune
+                            {btnMainLabel}
                         </Button>
 
                         {/* Bouton Secondaire */}
-                        <div className="relative inline-flex">
-                            <Button
-                                variant="secondary"
-                                onClick={onDrawThree}
-                                disabled={!isPremium}
-                                icon={!isPremium ? <Icon icon="mingcute:lock-fill" width="16" height="16" /> : undefined}
-                                className=""
-                            >
-                                3 runes
-                            </Button>
-                        </div>
+                        {btnSecondEnabled && (
+                            <div className="relative inline-flex">
+                                <Button
+                                    variant="secondary"
+                                    onClick={onDrawThree}
+                                    disabled={isSecondLocked}
+                                    icon={isSecondLocked ? <Icon icon="mingcute:lock-fill" width="16" height="16" /> : <Icon icon={btnSecondIcon} width="20" />}
+                                    className=""
+                                >
+                                    {btnSecondLabel}
+                                </Button>
+                            </div>
+                        )}
 
                     </div>
 
@@ -105,6 +130,16 @@ export function DrawIntroCard({
                             </p>
                         )}
                     </div>
+
+                    {/* Cheat Reset for Testing */}
+                    {onResetLimit && !canDrawFree && !isPremium && (
+                        <button
+                            onClick={onResetLimit}
+                            className="mt-2 ml-1 text-[10px] uppercase tracking-wider text-slate-500 hover:text-[var(--accent-500)] underline transition-colors"
+                        >
+                            [Admin] Reset Daily Limit
+                        </button>
+                    )}
 
                 </div>
             </div>

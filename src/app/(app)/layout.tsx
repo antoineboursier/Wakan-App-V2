@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Skranji, League_Spartan } from "next/font/google";
 import { Navigation } from "@/components/layout/Navigation";
 import { TransitionProvider } from "@/components/layout/TransitionProvider";
+import { AdminBoLink } from "@/components/admin/AdminBoLink";
 import "./globals.css";
 
 const skranji = Skranji({
@@ -34,6 +35,7 @@ export default function RootLayout({
             {children}
           </TransitionProvider>
         </main>
+        <AdminBoLink />
       </body>
     </html>
   );

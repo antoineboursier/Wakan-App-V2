@@ -34,5 +34,16 @@ export function useDailyFreeLimit(drawSlug: string) {
         }
     };
 
-    return { canDrawFree, consumeFreeDraw, loadinglimit };
+    const resetLimit = () => {
+        try {
+            const today = new Date().toISOString().split("T")[0];
+            const key = `draw:${drawSlug}:${today}`;
+            localStorage.removeItem(key);
+            setCanDrawFree(true);
+        } catch (e) {
+            console.error("Error resetting limit", e);
+        }
+    };
+
+    return { canDrawFree, consumeFreeDraw, resetLimit, loadinglimit };
 }

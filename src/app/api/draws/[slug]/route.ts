@@ -21,7 +21,7 @@ export async function GET(
         // 1. Récupérer le type de tirage
         const { data: drawType, error: typeError } = await supabase
             .from('draw_types')
-            .select('id, slug, name, description, is_active')
+            .select('id, slug, title, description, is_active')
             .eq('slug', slug)
             .single()
 
@@ -75,13 +75,13 @@ export async function GET(
         if (count === 1) {
             return NextResponse.json({
                 draw_type: drawType.slug,
-                draw_name: drawType.name,
+                draw_name: drawType.title,
                 item: selectedItems[0]
             })
         } else {
             return NextResponse.json({
                 draw_type: drawType.slug,
-                draw_name: drawType.name,
+                draw_name: drawType.title,
                 items: selectedItems
             })
         }
