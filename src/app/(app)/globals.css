@@ -223,7 +223,7 @@ h6 {
 .btn-wakan-primary {
   display: inline-flex;
   justify-content: center;
-  padding: var(--sizes-sm, 12px) var(--sizes-m, 16px);
+  padding: 13px var(--sizes-m, 16px) 11px var(--sizes-m, 16px);
   align-items: center;
   gap: var(--sizes-s, 8px);
   border-radius: var(--sizes-m, 16px);
@@ -258,7 +258,7 @@ h6 {
 .btn-wakan-secondary {
   display: inline-flex;
   justify-content: center;
-  padding: var(--sizes-sm, 12px) var(--sizes-m, 16px);
+  padding: 13px var(--sizes-m, 16px) 11px var(--sizes-m, 16px);
   align-items: center;
   gap: var(--sizes-s, 8px);
   border-radius: var(--sizes-m, 16px);

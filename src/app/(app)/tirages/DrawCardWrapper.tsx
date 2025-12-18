@@ -6,7 +6,8 @@ import { DrawIntroCard } from "@/components/draws/DrawIntroCard";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useDailyFreeLimit } from "@/hooks/useDailyFreeLimit";
 import { Modal } from "@/components/ui/Modal";
-import { DrawLoader } from "@/components/animations/DrawLoader";
+import { performDraw, DrawResult } from "@/app/actions/draws";
+import { MorphingLoader } from "@/components/animations/MorphingLoader";
 
 interface DrawCardWrapperProps {
     slug: string;
@@ -40,24 +41,48 @@ export function DrawCardWrapper({
     const router = useRouter();
     const { isPremium } = useEntitlements();
     const { canDrawFree, loadinglimit, resetLimit } = useDailyFreeLimit(slug);
+
+    // UI State
     const [isDrawing, setIsDrawing] = useState(false);
-    const [drawCount, setDrawCount] = useState<1 | 3>(1);
+    const [drawResult, setDrawResult] = useState<DrawResult | null>(null);
 
-    const startDrawSequence = (count: 1 | 3) => {
+    const startDrawSequence = async (count: 1 | 3) => {
         setIsDrawing(true);
-        setDrawCount(count);
+        setDrawResult(null);
 
-        // Simulate delay for animation before navigating
-        setTimeout(() => {
-            router.push(`/tirages/${slug}/result?count=${count}`);
-            // Note: Don't setIsDrawing(false) here, let the page transition happen while loader is visible
-        }, 2500);
+        try {
+            // 1. Perform Draw on Server (fetches winners + shuffle items)
+            const result = await performDraw(slug, count);
+            setDrawResult(result);
+            // Modal opens because isDrawing=true. 
+            // We wait for MorphingLoader to call onComplete.
+        } catch (e) {
+            console.error("Draw failed", e);
+            alert("Une erreur est survenue lors du tirage.");
+            setIsDrawing(false);
+        }
+    };
+
+    const handleAnimationComplete = () => {
+        if (!drawResult) return;
+        const ids = drawResult.winners.map(w => w.id).join(',');
+        const reversedIds = drawResult.winners
+            .filter(w => w.is_reversed)
+            .map(w => w.id)
+            .join(',');
+
+        const query = new URLSearchParams();
+        query.set('ids', ids);
+        query.set('count', drawResult.winners.length.toString());
+        if (reversedIds) query.set('r_ids', reversedIds);
+
+        // 2. Navigate with IDs to display result
+        router.push(`/tirages/${slug}/result?${query.toString()}`);
     };
 
     const handleDrawOne = () => {
         // Validation Logic for Main Draw
         if (isMainPremium && !isPremium) {
-            // Should be handled by UI disabled state or a paywall Modal
             alert("Ce tirage est réservé aux membres Premium");
             return;
         }
@@ -101,8 +126,20 @@ export function DrawCardWrapper({
                 isSecondBtnPremium={isSecondBtnPremium}
             />
 
-            <Modal isOpen={isDrawing} onClose={() => { /* Prevent closing during draw */ }}>
-                <DrawLoader />
+            <Modal isOpen={isDrawing} onClose={() => { /* Prevent closing */ }}>
+                {/* Only show loader when we have data to animate */}
+                {drawResult ? (
+                    <MorphingLoader
+                        images={drawResult.distractors.map(d => d.image_url || '/placeholder.png')}
+                        finalImage={drawResult.winners[0].image_url || '/placeholder.png'}
+                        onComplete={handleAnimationComplete}
+                    />
+                ) : (
+                    // Optional: Simple spinner while waiting for performDraw
+                    <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent-500)]"></div>
+                    </div>
+                )}
             </Modal>
         </>
     );

@@ -38,8 +38,10 @@ export interface DrawItem {
     slug: string;
     name: string;
     image_url?: string | null;
-    description: string; // The main meaning text
-    keywords?: string[] | null; // Tags like 'Feu', 'Richesse'
+    long_description: string;
+    short_description?: string | null;
+    reversed_description?: string | null;
+    keywords?: string[] | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -67,8 +69,8 @@ export type DrawItemFormData = {
     slug: string;
     name: string;
     image_url?: string;
-    description?: string;
-    keywords?: string[];
+    long_description?: string;
+    reversed_description?: string;
     is_active: boolean;
 };
 

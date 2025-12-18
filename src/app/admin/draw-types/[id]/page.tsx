@@ -121,13 +121,67 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
         setFormState(prev => prev ? ({ ...prev, [field]: value }) : null);
     };
 
+    // Image Compression Utility
+    async function compressToWebP(file: File): Promise<File> {
+        // SVG: Vector format, do not rasterize.
+        if (file.type === 'image/svg+xml') return file;
+
+        // Skip if already WebP to avoid re-compression artifacts? 
+        // Actually, re-compressing might be useful if the user uploads a huge WebP.
+        // But for safety and speed, we mainly want to catch PNG/JPG.
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    URL.revokeObjectURL(img.src);
+                    resolve(file); // Fallback to original
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+
+                canvas.toBlob((blob) => {
+                    URL.revokeObjectURL(img.src);
+                    if (!blob) {
+                        resolve(file); // Fallback
+                        return;
+                    }
+                    // Create new File with .webp extension
+                    const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                    const newFile = new File([blob], newFileName, {
+                        type: "image/webp",
+                        lastModified: Date.now(),
+                    });
+                    console.log(`[Compression] Converted ${file.name} (${(file.size / 1024).toFixed(1)}kb) to ${newFileName} (${(newFile.size / 1024).toFixed(1)}kb)`);
+                    resolve(newFile);
+                }, "image/webp", 0.85); // 85% Quality is a good balance
+            };
+            img.onerror = (e) => {
+                URL.revokeObjectURL(img.src);
+                console.warn("Image load failed for compression, using original.", e);
+                resolve(file);
+            };
+        });
+    }
+
     async function handleUpload(file: File): Promise<string | null> {
         try {
+            console.log("Processing upload for:", file.name, file.type);
+
+            // Client-side optimization
+            const processedFile = await compressToWebP(file);
+
             const fd = new FormData();
-            fd.append('file', file);
+            fd.append('file', processedFile);
             const url = await uploadImage(fd);
             return url;
         } catch (e) {
+            console.error(e);
             alert("Erreur upload: " + e);
             return null;
         }
@@ -191,11 +245,12 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
             const rawData = {
                 name: formData.get('item_name') as string,
                 slug: formData.get('item_slug') as string,
-                description: formData.get('item_desc') as string,
+                long_description: formData.get('item_long_desc') as string,
+                reversed_description: formData.get('item_reversed_desc') as string || null,
                 image_url: formData.get('item_image') as string,
-                keywords: [],
                 is_active: true
             };
+            // @ts-ignore
             await addDrawItem(drawType.id, rawData);
 
             const fresh = await getDrawType(drawType.id);
@@ -212,10 +267,11 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
             const rawData = {
                 name: formData.get('item_name') as string,
                 slug: formData.get('item_slug') as string,
-                description: formData.get('item_desc') as string,
+                long_description: formData.get('item_long_desc') as string,
+                reversed_description: formData.get('item_reversed_desc') as string || null,
                 image_url: formData.get('item_image') as string,
-                keywords: []
             };
+            // @ts-ignore
             await updateDrawItem(id, drawType.id, rawData);
 
             const fresh = await getDrawType(drawType.id);
@@ -309,7 +365,7 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
                     onClick={() => setActiveTab('data')}
                     className={clsx("pb-4 text-sm font-medium transition-colors relative", activeTab === 'data' ? "text-white" : "text-slate-400 hover:text-slate-200")}
                 >
-                    Données (Contenu)
+                    Valeurs (Contenu)
                     {activeTab === 'data' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500" />}
                 </button>
             </div>
@@ -583,9 +639,17 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
                                                 <div className="text-[10px] text-slate-500 font-mono">{item.slug}</div>
                                             </td>
                                             <td className="px-6 py-3 text-slate-300 max-w-sm">
-                                                <div className="line-clamp-2 text-sm">
-                                                    {item.description}
+                                                <div className="line-clamp-2 text-sm mb-1">
+                                                    {item.long_description}
                                                 </div>
+                                                {item.reversed_description && (
+                                                    <div className="mt-2 pt-2 border-t border-slate-700/50 flex gap-2">
+                                                        <Icon icon="mdi:rotate-3d-variant" className="text-orange-400 shrink-0 mt-0.5" />
+                                                        <span className="text-xs text-orange-300 italic line-clamp-2">
+                                                            {item.reversed_description}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-3 text-right">
                                                 <button
@@ -625,17 +689,44 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-bold text-slate-400 uppercase">Nom</label>
-                                                    <input name="item_name" defaultValue={editingItem?.name} className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none" required autoFocus />
+                                                    <input
+                                                        name="item_name"
+                                                        defaultValue={editingItem?.name}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            const slugInput = document.querySelector('input[name="item_slug"]') as HTMLInputElement;
+                                                            if (slugInput && (!slugInput.value || slugInput.value === '')) {
+                                                                slugInput.value = val.toLowerCase().trim()
+                                                                    .replace(/[^\w\s-]/g, '')
+                                                                    .replace(/[\s_-]+/g, '-')
+                                                                    .replace(/^-+|-+$/g, '');
+                                                            }
+                                                        }}
+                                                        className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                                                        required
+                                                        autoFocus
+                                                    />
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-bold text-slate-400 uppercase">Slug</label>
-                                                    <input name="item_slug" defaultValue={editingItem?.slug} className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-slate-300 font-mono focus:ring-1 focus:ring-blue-500 outline-none" placeholder="auto-recommendé" required />
+                                                    <input
+                                                        name="item_slug"
+                                                        defaultValue={editingItem?.slug}
+                                                        className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-slate-300 font-mono focus:ring-1 focus:ring-blue-500 outline-none"
+                                                        placeholder="auto-généré"
+                                                        required
+                                                    />
                                                 </div>
                                             </div>
 
                                             <div className="space-y-1">
-                                                <label className="text-xs font-bold text-slate-400 uppercase">Description</label>
-                                                <textarea name="item_desc" defaultValue={editingItem?.description} rows={4} className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none" required />
+                                                <label className="text-xs font-bold text-slate-400 uppercase">Description Principale (Signification)</label>
+                                                <textarea name="item_long_desc" defaultValue={editingItem?.long_description} rows={5} className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none" required />
+                                            </div>
+
+                                            {/* Reversed Value Section */}
+                                            <div className="pt-2">
+                                                <ReversibleSection defaultReversed={editingItem?.reversed_description || ''} />
                                             </div>
 
                                             <div className="space-y-1">
@@ -712,5 +803,37 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
                 }
             </div >
         </div >
+    );
+}
+
+function ReversibleSection({ defaultReversed }: { defaultReversed: string }) {
+    const [isReversible, setIsReversible] = useState(!!defaultReversed);
+    return (
+        <div className="space-y-4 bg-slate-900/40 p-3 rounded border border-slate-700/50">
+            <div className="flex items-center gap-2">
+                <input
+                    type="checkbox"
+                    id="is_reversible"
+                    checked={isReversible}
+                    onChange={(e) => setIsReversible(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-orange-500 focus:ring-orange-500/50"
+                />
+                <label htmlFor="is_reversible" className="text-sm font-medium text-orange-200 select-none cursor-pointer flex items-center gap-2">
+                    <Icon icon="mdi:rotate-3d-variant" /> Valeur inversable ?
+                </label>
+            </div>
+            {isReversible && (
+                <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                    <label className="text-xs font-bold text-orange-400 uppercase">Description (Sens Inversé)</label>
+                    <textarea
+                        name="item_reversed_desc"
+                        defaultValue={defaultReversed}
+                        rows={3}
+                        className="w-full bg-slate-800 border-orange-900/30 border rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none placeholder:text-slate-600"
+                        placeholder="Signification si la carte/rune sort à l'envers..."
+                    />
+                </div>
+            )}
+        </div>
     );
 }
