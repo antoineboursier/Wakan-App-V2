@@ -23,6 +23,9 @@ interface DrawIntroCardProps {
     isMainPremium?: boolean;
     isSecondBtnPremium?: boolean;
     isLoading?: boolean;
+    btnMainLimitCount?: number;
+    btnMainLimitEnabled?: boolean;
+    remainingDraws?: number;
 }
 
 export function DrawIntroCard({
@@ -41,6 +44,9 @@ export function DrawIntroCard({
     btnSecondEnabled = false,
     isMainPremium = false,
     isSecondBtnPremium = true,
+    btnMainLimitCount = 1,
+    btnMainLimitEnabled = false,
+    remainingDraws = 0,
 }: DrawIntroCardProps) {
     const isMainLocked = !isPremium && isMainPremium;
     const isMainDisabled = isMainLocked || (!isPremium && !canDrawFree);
@@ -48,10 +54,10 @@ export function DrawIntroCard({
     const isSecondLocked = !isPremium && isSecondBtnPremium;
 
     return (
-        <GlassCard className="w-full max-w-sm mx-auto p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-[var(--text-tertiary)]">
+        <GlassCard id="draw-intro-card" className="w-full max-w-sm mx-auto p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-[var(--text-tertiary)] h-full">
 
             {/* Header Image + Gradient */}
-            <div className="relative w-full h-[160px] shrink-0">
+            <div id="draw-intro-image" className="relative w-full h-[160px] shrink-0">
                 <img
                     src={imageUrl || "/backgrounds/journal.png"}
                     alt="Draw Background"
@@ -67,20 +73,22 @@ export function DrawIntroCard({
             </div>
 
             {/* Content */}
-            <div className="p-6 w-full flex flex-col gap-6 mt-[-40px]">
+            <div id="draw-intro-content" className="p-6 w-full flex flex-col gap-6 mt-[-40px] flex-1">
 
                 {/* Typography */}
-                <div className="flex flex-col gap-2">
+                <div id="draw-intro-typography" className="flex flex-col gap-2">
                     <h1 className="title-big text-[var(--text-primary)] leading-tight drop-shadow-md">
                         {title}
                     </h1>
-                    <p className="para-big text-[var(--accent-900)] leading-snug font-bold">
-                        {subtitle}
-                    </p>
+                    {subtitle && (
+                        <p className="para-big text-[var(--accent-900)] leading-snug font-bold">
+                            {subtitle}
+                        </p>
+                    )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-col items-start gap-4">
+                <div id="draw-intro-actions" className="flex flex-col items-start gap-4">
 
                     <div className="flex flex-col gap-3 w-full">
 
@@ -113,16 +121,27 @@ export function DrawIntroCard({
                     </div>
 
                     {/* Infos / Limites */}
-                    <div className="ml-1">
-                        {!canDrawFree && !isPremium && (
-                            <p className="para-lit text-[var(--ui-alert)] font-bold">
-                                Limite atteinte pour aujourd'hui
-                            </p>
-                        )}
-                        {canDrawFree && !isPremium && (
-                            <p className="para-lit text-[var(--text-primary)] opacity-80">
-                                1 rune gratuite / jour
-                            </p>
+                    <div id="draw-intro-limits" className="ml-1">
+                        {btnMainLimitEnabled && !isPremium && (
+                            !canDrawFree ? (
+                                <p className="para-lit text-[var(--ui-on-alert)] font-bold flex items-center gap-2 flex-wrap">
+                                    <span>0/{btnMainLimitCount} tirage{btnMainLimitCount > 1 ? 's' : ''} restant{btnMainLimitCount > 1 ? 's' : ''} — Limite atteinte</span>
+                                    {/* Reset button - Dev only */}
+                                    {process.env.NODE_ENV === 'development' && onResetLimit && (
+                                        <button
+                                            type="button"
+                                            onClick={onResetLimit}
+                                            className="text-[10px] uppercase tracking-wider text-slate-500 hover:text-[var(--accent-500)] underline transition-colors"
+                                        >
+                                            [Reset]
+                                        </button>
+                                    )}
+                                </p>
+                            ) : (
+                                <p className="para-lit text-[var(--text-primary)] opacity-80">
+                                    {remainingDraws}/{btnMainLimitCount} tirage{btnMainLimitCount > 1 ? 's' : ''} gratuit{btnMainLimitCount > 1 ? 's' : ''} restant{remainingDraws > 1 ? 's' : ''}
+                                </p>
+                            )
                         )}
                         {isPremium && (
                             <p className="para-lit text-[var(--accent-500)]">
@@ -130,16 +149,6 @@ export function DrawIntroCard({
                             </p>
                         )}
                     </div>
-
-                    {/* Cheat Reset for Testing */}
-                    {onResetLimit && !canDrawFree && !isPremium && (
-                        <button
-                            onClick={onResetLimit}
-                            className="mt-2 ml-1 text-[10px] uppercase tracking-wider text-slate-500 hover:text-[var(--accent-500)] underline transition-colors"
-                        >
-                            [Admin] Reset Daily Limit
-                        </button>
-                    )}
 
                 </div>
             </div>

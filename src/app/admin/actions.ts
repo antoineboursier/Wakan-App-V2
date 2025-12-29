@@ -51,7 +51,10 @@ export async function getDrawType(id: string): Promise<DrawType | null> {
 export async function createDrawType(formData: DrawTypeFormData) {
     const { data, error } = await supabase
         .from('draw_types')
-        .insert([formData])
+        .insert([{
+            ...formData,
+            is_active: formData.is_active ?? false // Ensure explicit boolean
+        }])
         .select()
         .single();
 
@@ -154,6 +157,48 @@ export async function addDrawItem(drawTypeId: string, formData: any) {
     return data;
 }
 
+// Check if a slug already exists for draw_items (global check)
+export async function checkItemSlugExists(slug: string, excludeId?: string): Promise<boolean> {
+    let query = supabase
+        .from('draw_items')
+        .select('id')
+        .eq('slug', slug);
+
+    if (excludeId) {
+        query = query.neq('id', excludeId);
+    }
+
+    const { data, error } = await query.limit(1);
+
+    if (error) {
+        console.error('Error checking slug:', error);
+        return false;
+    }
+
+    return (data && data.length > 0);
+}
+
+// Check if a slug already exists for draw_types
+export async function checkDrawTypeSlugExists(slug: string, excludeId?: string): Promise<boolean> {
+    let query = supabase
+        .from('draw_types')
+        .select('id')
+        .eq('slug', slug);
+
+    if (excludeId) {
+        query = query.neq('id', excludeId);
+    }
+
+    const { data, error } = await query.limit(1);
+
+    if (error) {
+        console.error('Error checking slug:', error);
+        return false;
+    }
+
+    return (data && data.length > 0);
+}
+
 export async function updateDrawItem(id: string, drawTypeId: string, formData: any) {
     const { data, error } = await supabase
         .from('draw_items')
@@ -177,6 +222,27 @@ export async function deleteDrawItem(id: string, drawTypeId: string) {
     if (error) throw new Error(error.message);
 
     revalidatePath(`/admin/draw-types/${drawTypeId}`);
+}
+
+export async function bulkCreateDrawItems(drawTypeId: string, items: any[]) {
+    // Add draw_type_id to each item
+    const itemsToInsert = items.map(item => ({
+        ...item,
+        draw_type_id: drawTypeId,
+        // Ensure critical fields are present
+        slug: item.slug || item.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-'),
+        is_active: item.is_active ?? true
+    }));
+
+    const { data, error } = await supabase
+        .from('draw_items')
+        .insert(itemsToInsert)
+        .select();
+
+    if (error) throw new Error(error.message);
+
+    revalidatePath(`/admin/draw-types/${drawTypeId}`);
+    return data;
 }
 
 export async function uploadImage(formData: FormData): Promise<string> {

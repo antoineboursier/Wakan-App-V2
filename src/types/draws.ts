@@ -20,6 +20,11 @@ export interface DrawType {
     updated_at: string;
     positions?: DrawPosition[];
     items?: DrawItem[];
+    btn_main_limit_enabled?: boolean;
+    btn_main_limit_count?: number;
+    // Complex draw configuration
+    btn_second_draw_count?: number; // Number of additional draws (default 2)
+    btn_second_include_first?: boolean; // Include first draw value in pool (default false)
 }
 
 export interface DrawPosition {
@@ -62,6 +67,11 @@ export type DrawTypeFormData = {
     btn_second_enabled?: boolean;
     is_premium?: boolean;
     btn_second_is_premium?: boolean;
+    btn_main_limit_enabled?: boolean;
+    btn_main_limit_count?: number;
+    // Complex draw configuration
+    btn_second_draw_count?: number;
+    btn_second_include_first?: boolean;
     is_active: boolean;
 };
 

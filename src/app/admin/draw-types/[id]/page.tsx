@@ -1,6 +1,6 @@
 'use client';
 
-import { getDrawType, updateDrawType, addDrawItem, updateDrawItem, deleteDrawItem, uploadImage } from "../../actions";
+import { getDrawType, updateDrawType, addDrawItem, updateDrawItem, deleteDrawItem, deleteDrawType, uploadImage, bulkCreateDrawItems, checkItemSlugExists } from "../../actions";
 import { DrawType, DrawItem } from "@/types/draws";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'general' | 'data'>('general');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Form Local State for tracking changes
     type FormStateType = {
@@ -30,6 +31,10 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
         btn_second_enabled: boolean;
         is_premium: boolean;
         btn_second_is_premium: boolean;
+        btn_main_limit_enabled: boolean;
+        btn_main_limit_count: number;
+        btn_second_draw_count: number;
+        btn_second_include_first: boolean;
         is_active: boolean;
     };
 
@@ -39,12 +44,22 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
     const [isAddingItem, setIsAddingItem] = useState(false);
     const [editingItem, setEditingItem] = useState<DrawItem | null>(null);
     const [itemImagePreview, setItemImagePreview] = useState('');
+    const [itemName, setItemName] = useState('');
+    const [itemSlug, setItemSlug] = useState('');
+    const [slugError, setSlugError] = useState<string | null>(null);
+    const [checkingSlug, setCheckingSlug] = useState(false);
 
     useEffect(() => {
         if (editingItem) {
             setItemImagePreview(editingItem.image_url || '');
+            setItemName(editingItem.name || '');
+            setItemSlug(editingItem.slug || '');
+            setSlugError(null);
         } else if (isAddingItem) {
             setItemImagePreview('');
+            setItemName('');
+            setItemSlug('');
+            setSlugError(null);
         }
     }, [editingItem, isAddingItem]);
 
@@ -69,6 +84,10 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
                     btn_second_enabled: data.btn_second_enabled ?? false,
                     is_premium: data.is_premium ?? false,
                     btn_second_is_premium: data.btn_second_is_premium ?? true,
+                    btn_main_limit_enabled: data.btn_main_limit_enabled ?? false,
+                    btn_main_limit_count: data.btn_main_limit_count ?? 1,
+                    btn_second_draw_count: data.btn_second_draw_count ?? 2,
+                    btn_second_include_first: data.btn_second_include_first ?? false,
                     is_active: data.is_active
                 });
             } catch (e) {
@@ -94,6 +113,8 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
         formState.btn_second_enabled !== (drawType.btn_second_enabled ?? false) ||
         formState.is_premium !== (drawType.is_premium ?? false) ||
         formState.btn_second_is_premium !== (drawType.btn_second_is_premium ?? true) ||
+        formState.btn_main_limit_enabled !== (drawType.btn_main_limit_enabled ?? false) ||
+        formState.btn_main_limit_count !== (drawType.btn_main_limit_count ?? 1) ||
         formState.is_active !== drawType.is_active
     );
 
@@ -112,6 +133,10 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
             btn_second_enabled: drawType.btn_second_enabled ?? false,
             is_premium: drawType.is_premium ?? false,
             btn_second_is_premium: drawType.btn_second_is_premium ?? true,
+            btn_main_limit_enabled: drawType.btn_main_limit_enabled ?? false,
+            btn_main_limit_count: drawType.btn_main_limit_count ?? 1,
+            btn_second_draw_count: drawType.btn_second_draw_count ?? 2,
+            btn_second_include_first: drawType.btn_second_include_first ?? false,
             is_active: drawType.is_active
         });
     };
@@ -187,6 +212,56 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
         }
     }
 
+    // --- Slug Helpers ---
+
+    // Generate slug from name: type_slug_item_name (e.g., rune_fehu)
+    function generateSlug(name: string): string {
+        if (!drawType) return '';
+        const typePrefix = drawType.slug || 'item';
+        const namePart = name.toLowerCase().trim()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+        return `${typePrefix}_${namePart}`;
+    }
+
+    // Handle name change: auto-generate slug
+    function handleItemNameChange(name: string) {
+        setItemName(name);
+        setSlugError(null);
+        // Only auto-generate if not editing OR if slug was empty
+        if (!editingItem || !itemSlug) {
+            const newSlug = generateSlug(name);
+            setItemSlug(newSlug);
+        }
+    }
+
+    // Validate slug uniqueness
+    async function validateSlug(slug: string): Promise<boolean> {
+        if (!slug) {
+            setSlugError("Le slug est requis.");
+            return false;
+        }
+
+        setCheckingSlug(true);
+        setSlugError(null);
+
+        try {
+            const exists = await checkItemSlugExists(slug, editingItem?.id);
+            if (exists) {
+                setSlugError("Ce slug existe déjà. Choisissez un autre.");
+                return false;
+            }
+            return true;
+        } catch (e) {
+            setSlugError("Erreur de vérification.");
+            return false;
+        } finally {
+            setCheckingSlug(false);
+        }
+    }
+
     // --- Actions Main Form ---
 
     async function handleUpdate() {
@@ -206,6 +281,10 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
                 btn_second_enabled: formState.btn_second_enabled,
                 is_premium: formState.is_premium,
                 btn_second_is_premium: formState.btn_second_is_premium,
+                btn_main_limit_enabled: formState.btn_main_limit_enabled,
+                btn_main_limit_count: formState.btn_main_limit_count,
+                btn_second_draw_count: formState.btn_second_draw_count,
+                btn_second_include_first: formState.btn_second_include_first,
                 is_active: formState.is_active,
             };
 
@@ -226,6 +305,10 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
                 btn_second_enabled: updated.btn_second_enabled ?? false,
                 is_premium: updated.is_premium ?? false,
                 btn_second_is_premium: updated.btn_second_is_premium ?? true,
+                btn_main_limit_enabled: updated.btn_main_limit_enabled ?? false,
+                btn_main_limit_count: updated.btn_main_limit_count ?? 1,
+                btn_second_draw_count: updated.btn_second_draw_count ?? 2,
+                btn_second_include_first: updated.btn_second_include_first ?? false,
                 is_active: updated.is_active
             });
 
@@ -236,21 +319,40 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
         }
     }
 
+    async function handleDelete() {
+        if (!drawType) return;
+        setSaving(true);
+        setShowDeleteConfirm(false);
+        try {
+            await deleteDrawType(drawType.id);
+            router.push('/admin/draw-types');
+        } catch (e) {
+            alert("Erreur suppression: " + e);
+            setSaving(false);
+        }
+    }
+
 
     // --- Actions Items ---
 
     async function handleAddItem(formData: FormData) {
         if (!drawType) return;
+
+        const slug = formData.get('item_slug') as string;
+
+        // Validate slug uniqueness
+        const isValid = await validateSlug(slug);
+        if (!isValid) return;
+
         try {
             const rawData = {
                 name: formData.get('item_name') as string,
-                slug: formData.get('item_slug') as string,
+                slug: slug,
                 long_description: formData.get('item_long_desc') as string,
                 reversed_description: formData.get('item_reversed_desc') as string || null,
                 image_url: formData.get('item_image') as string,
                 is_active: true
             };
-            // @ts-ignore
             await addDrawItem(drawType.id, rawData);
 
             const fresh = await getDrawType(drawType.id);
@@ -263,15 +365,21 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
 
     async function handleUpdateItemInternal(id: string, formData: FormData) {
         if (!drawType) return;
+
+        const slug = formData.get('item_slug') as string;
+
+        // Validate slug uniqueness
+        const isValid = await validateSlug(slug);
+        if (!isValid) return;
+
         try {
             const rawData = {
                 name: formData.get('item_name') as string,
-                slug: formData.get('item_slug') as string,
+                slug: slug,
                 long_description: formData.get('item_long_desc') as string,
                 reversed_description: formData.get('item_reversed_desc') as string || null,
                 image_url: formData.get('item_image') as string,
             };
-            // @ts-ignore
             await updateDrawItem(id, drawType.id, rawData);
 
             const fresh = await getDrawType(drawType.id);
@@ -294,6 +402,51 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
         }
     }
 
+    // --- Import / Export ---
+    const handleExport = () => {
+        if (!drawType?.items) return;
+        // Clean data for export (remove specific IDs)
+        const exportData = drawType.items.map(({ id, draw_type_id, created_at, ...rest }) => rest);
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${drawType.slug}_items_export.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !drawType) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const json = JSON.parse(event.target?.result as string);
+                if (!Array.isArray(json)) throw new Error("Format invalide (doit être un tableau)");
+
+                // Sanitation done on server or simple mapping here
+                const itemsToImport = json;
+
+                if (confirm(`Importer ${itemsToImport.length} éléments ?`)) {
+                    await bulkCreateDrawItems(drawType.id, itemsToImport);
+                    const fresh = await getDrawType(drawType.id);
+                    setDrawType(fresh);
+                    alert("Import réussi !");
+                }
+            } catch (err) {
+                alert("Erreur import: " + err);
+            } finally {
+                // Reset input
+                e.target.value = '';
+            }
+        };
+        reader.readAsText(file);
+    };
+
 
     if (loading) return <div className="text-white p-10">Chargement...</div>;
     if (error || !drawType || !formState) return <div className="text-red-400 p-10">{error || "Erreur inattendue"}</div>;
@@ -313,496 +466,637 @@ export default function EditDrawTypePage({ params }: { params: Promise<{ id: str
         </button>
     );
 
-    return (
-        <div id="admin-edit-type-page" className="max-w-5xl mx-auto space-y-8 pb-20 relative">
-            {/* Header */}
-            <div className="flex items-center gap-4 border-b border-slate-700 pb-6">
-                <Link href="/admin/draw-types" className="text-slate-400 hover:text-white transition-colors">
-                    <Icon icon="mdi:arrow-left" className="w-6 h-6" />
-                </Link>
-                <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-bold text-white">{drawType.title}</h1>
-                        <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded">
-                            {drawType.slug}
-                        </span>
-                    </div>
+    // Custom Delete Confirmation Modal
+    const DeleteConfirmModal = () => showDeleteConfirm ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-slate-800 rounded-xl border border-slate-600 shadow-2xl w-full max-w-md p-6 space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-3 text-red-400">
+                    <Icon icon="mdi:alert-circle" width="28" />
+                    <h3 className="text-lg font-bold">Confirmer la suppression</h3>
                 </div>
-
-                <div className="flex items-center gap-2">
-                    {hasChanges && (
-                        <button
-                            type="button"
-                            onClick={handleReset}
-                            className="px-4 py-2 rounded text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-                        >
-                            Annuler
-                        </button>
-                    )}
+                <p className="text-slate-300">
+                    Êtes-vous sûr de vouloir supprimer le tirage <strong className="text-white">"{drawType?.title}"</strong> ?
+                </p>
+                <p className="text-sm text-red-400/70">
+                    Cette action est irréversible et supprimera toutes les données associées.
+                </p>
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
                     <button
-                        onClick={handleUpdate}
-                        disabled={!hasChanges || saving}
-                        className={`px-6 py-2 rounded text-sm font-medium transition-colors ${hasChanges && !saving
-                            ? "bg-blue-600 hover:bg-blue-500 text-white"
-                            : "bg-slate-700 text-slate-400 cursor-not-allowed"
-                            }`}
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded transition-colors"
                     >
-                        {saving ? 'Sauvegarde...' : 'Enregistrer'}
+                        Annuler
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={saving}
+                        className="px-4 py-2 text-sm bg-red-600 hover:bg-red-500 text-white rounded transition-colors flex items-center gap-2"
+                    >
+                        {saving ? 'Suppression...' : 'Supprimer définitivement'}
                     </button>
                 </div>
             </div>
+        </div>
+    ) : null;
 
-            {/* Tabs */}
-            <div className="flex items-center gap-8 border-b border-slate-700">
-                <button
-                    onClick={() => setActiveTab('general')}
-                    className={clsx("pb-4 text-sm font-medium transition-colors relative", activeTab === 'general' ? "text-white" : "text-slate-400 hover:text-slate-200")}
-                >
-                    Général
-                    {activeTab === 'general' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500" />}
-                </button>
-                <button
-                    onClick={() => setActiveTab('data')}
-                    className={clsx("pb-4 text-sm font-medium transition-colors relative", activeTab === 'data' ? "text-white" : "text-slate-400 hover:text-slate-200")}
-                >
-                    Valeurs (Contenu)
-                    {activeTab === 'data' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500" />}
-                </button>
-            </div>
+    return (
+        <>
+            <DeleteConfirmModal />
+            <div id="admin-edit-type-page" className="max-w-5xl mx-auto space-y-8 pb-20 relative">
+                {/* Header */}
+                <div className="flex items-center gap-4 border-b border-slate-700 pb-6">
+                    <Link href="/admin/draw-types" className="text-slate-400 hover:text-white transition-colors">
+                        <Icon icon="mdi:arrow-left" className="w-6 h-6" />
+                    </Link>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold text-white">{drawType.title}</h1>
+                            <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded">
+                                {drawType.slug}
+                            </span>
+                        </div>
+                    </div>
 
-            {/* Content Active Tab */}
-            <div className="min-h-[400px]">
+                    <div className="flex items-center gap-2">
+                        {hasChanges && (
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                className="px-4 py-2 rounded text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                            >
+                                Annuler
+                            </button>
+                        )}
+                        <button
+                            onClick={handleUpdate}
+                            disabled={!hasChanges || saving}
+                            className={`px-6 py-2 rounded text-sm font-medium transition-colors ${hasChanges && !saving
+                                ? "bg-blue-600 hover:bg-blue-500 text-white"
+                                : "bg-slate-700 text-slate-400 cursor-not-allowed"
+                                }`}
+                        >
+                            {saving ? 'Sauvegarde...' : 'Enregistrer'}
+                        </button>
+                    </div>
+                </div>
 
-                {/* --- TAB: GENERAL --- */}
-                {activeTab === 'general' && (
-                    <div className="animate-in fade-in duration-300 max-w-3xl">
-                        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
-                            <div className="space-y-4">
-                                <h2 className="text-lg font-medium text-white border-b border-slate-700 pb-2 mb-4">Informations Principales</h2>
+                {/* Tabs */}
+                <div className="flex items-center gap-8 border-b border-slate-700">
+                    <button
+                        onClick={() => setActiveTab('general')}
+                        className={clsx("pb-4 text-sm font-medium transition-colors relative", activeTab === 'general' ? "text-white" : "text-slate-400 hover:text-slate-200")}
+                    >
+                        Général
+                        {activeTab === 'general' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500" />}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('data')}
+                        className={clsx("pb-4 text-sm font-medium transition-colors relative", activeTab === 'data' ? "text-white" : "text-slate-400 hover:text-slate-200")}
+                    >
+                        Valeurs
+                        {activeTab === 'data' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500" />}
+                    </button>
+                </div>
 
-                                <div className="grid grid-cols-2 gap-6 items-start">
+                {/* Content Active Tab */}
+                <div className="min-h-[400px]">
+
+                    {/* --- TAB: GENERAL --- */}
+                    {activeTab === 'general' && (
+                        <div className="animate-in fade-in duration-300 w-full">
+                            <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-medium text-white border-b border-slate-700 pb-2 mb-4">Informations Principales</h2>
+
+                                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                                        <div className="space-y-2 flex-1 w-full">
+                                            <div className="flex justify-between items-center w-full">
+                                                <label className="block text-sm font-medium text-slate-300">Titre</label>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={formState.title}
+                                                onChange={(e) => handleChange('title', e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            />
+                                        </div>
+                                        <div className="pt-7">
+                                            <ToggleActive />
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-slate-300">Titre</label>
+                                        <label className="block text-sm font-medium text-slate-300">Sous-titre (Front)</label>
                                         <input
                                             type="text"
-                                            value={formState.title}
-                                            onChange={(e) => handleChange('title', e.target.value)}
+                                            value={formState.intro_subtitle}
+                                            onChange={(e) => handleChange('intro_subtitle', e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            placeholder="Ex: Ta rune du jour"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-slate-300">Description</label>
+                                        <textarea
+                                            value={formState.description}
+                                            onChange={(e) => handleChange('description', e.target.value)}
+                                            rows={3}
                                             className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                         />
                                     </div>
-                                    <div className="space-y-2 pt-6">
-                                        <ToggleActive />
-                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-slate-300">Description</label>
-                                    <textarea
-                                        value={formState.description}
-                                        onChange={(e) => handleChange('description', e.target.value)}
-                                        rows={3}
-                                        className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                </div>
+                                {/* Configuration des Boutons */}
+                                <div className="space-y-4 pt-4 border-t border-slate-700">
+                                    <h2 className="text-lg font-medium text-white pb-2">Configuration des Boutons</h2>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-slate-300">Sous-titre (Intro)</label>
-                                    <input
-                                        type="text"
-                                        value={formState.intro_subtitle}
-                                        onChange={(e) => handleChange('intro_subtitle', e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Configuration des Boutons */}
-                            <div className="space-y-4 pt-4 border-t border-slate-700">
-                                <h2 className="text-lg font-medium text-white pb-2">Configuration des Boutons</h2>
-
-                                {/* Bouton Principal */}
-                                <div className="p-4 bg-slate-900 rounded-lg space-y-4 border border-slate-700">
-                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Tirage Principal (Simple)</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-xs text-slate-500">Label</label>
-                                            <input
-                                                type="text"
-                                                value={formState.btn_main_label}
-                                                onChange={(e) => handleChange('btn_main_label', e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs text-slate-500 flex items-center gap-2">
-                                                Icône <a href="https://icon-sets.iconify.design/" target="_blank" className="text-blue-400 hover:universe"><Icon icon="mdi:open-in-new" width="12" /></a>
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <div className="w-10 h-10 bg-slate-800 border border-slate-600 rounded flex items-center justify-center text-white">
-                                                    <Icon icon={formState.btn_main_icon} width="20" />
-                                                </div>
+                                    {/* Bouton Principal */}
+                                    <div className="p-4 bg-slate-900 rounded-lg space-y-4 border border-slate-700">
+                                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Tirage Principal (Simple)</h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs text-slate-500">Label</label>
                                                 <input
                                                     type="text"
-                                                    value={formState.btn_main_icon}
-                                                    onChange={(e) => handleChange('btn_main_icon', e.target.value)}
-                                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
+                                                    value={formState.btn_main_label}
+                                                    onChange={(e) => handleChange('btn_main_label', e.target.value)}
+                                                    className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
                                                 />
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <input
-                                            type="checkbox"
-                                            id="is_premium"
-                                            checked={formState.is_premium}
-                                            onChange={(e) => handleChange('is_premium', e.target.checked)}
-                                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
-                                        />
-                                        <label htmlFor="is_premium" className="text-sm text-slate-300 select-none cursor-pointer">
-                                            Option Premium (Réservé aux membres)
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Bouton Secondaire */}
-                                <div className="p-4 bg-slate-900 rounded-lg space-y-4 border border-slate-700">
-                                    <div className="flex justify-between items-center">
-                                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Tirage Secondaire (Complexe)</h3>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-slate-500 mr-2">{formState.btn_second_enabled ? 'Activé' : 'Désactivé'}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleChange('btn_second_enabled', !formState.btn_second_enabled)}
-                                                className={clsx("w-10 h-5 rounded-full p-0.5 transition-colors relative", formState.btn_second_enabled ? "bg-blue-600" : "bg-slate-700")}
-                                            >
-                                                <div className={clsx("w-4 h-4 rounded-full bg-white shadow-sm transition-transform", formState.btn_second_enabled ? "translate-x-5" : "translate-x-0")} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {formState.btn_second_enabled && (
-                                        <div className="animate-in slide-in-from-top-2 duration-200">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-xs text-slate-500">Label</label>
+                                            <div className="space-y-2">
+                                                <label className="text-xs text-slate-500 flex items-center gap-2">
+                                                    Icône <a href="https://icon-sets.iconify.design/" target="_blank" className="text-blue-400 hover:universe"><Icon icon="mdi:open-in-new" width="12" /></a>
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    <div className="w-10 h-10 bg-slate-800 border border-slate-600 rounded flex items-center justify-center text-white">
+                                                        <Icon icon={formState.btn_main_icon} width="20" />
+                                                    </div>
                                                     <input
                                                         type="text"
-                                                        value={formState.btn_second_label}
-                                                        onChange={(e) => handleChange('btn_second_label', e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
+                                                        value={formState.btn_main_icon}
+                                                        onChange={(e) => handleChange('btn_main_icon', e.target.value)}
+                                                        className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
                                                     />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-xs text-slate-500 flex items-center gap-2">
-                                                        Icône
-                                                    </label>
-                                                    <div className="flex gap-2">
-                                                        <div className="w-10 h-10 bg-slate-800 border border-slate-600 rounded flex items-center justify-center text-white">
-                                                            <Icon icon={formState.btn_second_icon} width="20" />
-                                                        </div>
-                                                        <input
-                                                            type="text"
-                                                            value={formState.btn_second_icon}
-                                                            onChange={(e) => handleChange('btn_second_icon', e.target.value)}
-                                                            className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
-                                                        />
-                                                    </div>
-                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 mt-4 pt-2 border-t border-slate-800">
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <input
+                                                type="checkbox"
+                                                id="is_premium"
+                                                checked={formState.is_premium}
+                                                onChange={(e) => handleChange('is_premium', e.target.checked)}
+                                                className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                            />
+                                            <label htmlFor="is_premium" className="text-sm text-slate-300 select-none cursor-pointer">
+                                                Option Premium (Réservé aux membres)
+                                            </label>
+                                        </div>
+
+                                        <div className="flex items-center gap-4 mt-2 pt-2 border-t border-slate-800">
+                                            <div className="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
-                                                    id="btn_second_is_premium"
-                                                    checked={formState.btn_second_is_premium}
-                                                    onChange={(e) => handleChange('btn_second_is_premium', e.target.checked)}
+                                                    id="btn_main_limit_enabled"
+                                                    checked={formState.btn_main_limit_enabled}
+                                                    onChange={(e) => handleChange('btn_main_limit_enabled', e.target.checked)}
                                                     className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
                                                 />
-                                                <label htmlFor="btn_second_is_premium" className="text-sm text-slate-300 select-none cursor-pointer">
-                                                    Option Premium (Réservé aux membres)
+                                                <label htmlFor="btn_main_limit_enabled" className="text-sm text-slate-300 select-none cursor-pointer">
+                                                    Limiter
                                                 </label>
                                             </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
 
-                            <div className="space-y-4 pt-4">
-                                <h2 className="text-lg font-medium text-white border-b border-slate-700 pb-2 mb-4">Visuels</h2>
-                                <div className="grid grid-cols-1 gap-6">
-                                    {/* Thumbnail Image */}
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-slate-300">Thumbnail Image</label>
-                                        <div className="flex items-center gap-4 bg-slate-900 border border-slate-600 rounded-lg p-2">
-                                            <div className="w-16 h-16 bg-slate-800 rounded flex-shrink-0 overflow-hidden border border-slate-700">
-                                                {formState.image_url ? (
-                                                    <img src={formState.image_url} className="w-full h-full object-cover" />
-                                                ) : <div className="w-full h-full flex items-center justify-center text-slate-600"><Icon icon="mdi:image-off" /></div>}
-                                            </div>
-                                            <div className="flex-1 space-y-2">
-                                                <input
-                                                    type="text"
-                                                    value={formState.image_url}
-                                                    onChange={(e) => handleChange('image_url', e.target.value)}
-                                                    placeholder="URL de l'image (ou charger un fichier)"
-                                                    className="w-full bg-slate-800 border-b border-slate-700 px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
-                                                />
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={async (e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (file) {
-                                                            const url = await handleUpload(file);
-                                                            if (url) handleChange('image_url', url);
-                                                        }
-                                                    }}
-                                                    className="w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"
-                                                />
-                                            </div>
+                                            {formState.btn_main_limit_enabled && (
+                                                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={formState.btn_main_limit_count}
+                                                        onChange={(e) => handleChange('btn_main_limit_count', parseInt(e.target.value) || 1)}
+                                                        className="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-white text-center"
+                                                    />
+                                                    <span className="text-xs text-slate-500">fois / jour</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Background Image */}
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-slate-300">Background Image (Optionnel)</label>
-                                        <div className="flex items-center gap-4 bg-slate-900 border border-slate-600 rounded-lg p-2">
-                                            <div className="w-16 h-16 bg-slate-800 rounded flex-shrink-0 overflow-hidden border border-slate-700">
-                                                {formState.background_image_url ? (
-                                                    <img src={formState.background_image_url} className="w-full h-full object-cover" />
-                                                ) : <div className="w-full h-full flex items-center justify-center text-slate-600"><Icon icon="mdi:image-off" /></div>}
-                                            </div>
-                                            <div className="flex-1 space-y-2">
-                                                <input
-                                                    type="text"
-                                                    value={formState.background_image_url}
-                                                    onChange={(e) => handleChange('background_image_url', e.target.value)}
-                                                    placeholder="URL de l'image (ou charger un fichier)"
-                                                    className="w-full bg-slate-800 border-b border-slate-700 px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
-                                                />
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={async (e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (file) {
-                                                            const url = await handleUpload(file);
-                                                            if (url) handleChange('background_image_url', url);
-                                                        }
-                                                    }}
-                                                    className="w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"
-                                                />
+                                    {/* Bouton Secondaire */}
+                                    <div className="p-4 bg-slate-900 rounded-lg space-y-4 border border-slate-700">
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Tirage Secondaire (Complexe)</h3>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-slate-500 mr-2">{formState.btn_second_enabled ? 'Activé' : 'Désactivé'}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleChange('btn_second_enabled', !formState.btn_second_enabled)}
+                                                    className={clsx("w-10 h-5 rounded-full p-0.5 transition-colors relative", formState.btn_second_enabled ? "bg-blue-600" : "bg-slate-700")}
+                                                >
+                                                    <div className={clsx("w-4 h-4 rounded-full bg-white shadow-sm transition-transform", formState.btn_second_enabled ? "translate-x-5" : "translate-x-0")} />
+                                                </button>
                                             </div>
                                         </div>
+
+                                        {formState.btn_second_enabled && (
+                                            <div className="animate-in slide-in-from-top-2 duration-200">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs text-slate-500">Label</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formState.btn_second_label}
+                                                            onChange={(e) => handleChange('btn_second_label', e.target.value)}
+                                                            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs text-slate-500 flex items-center gap-2">
+                                                            Icône
+                                                        </label>
+                                                        <div className="flex gap-2">
+                                                            <div className="w-10 h-10 bg-slate-800 border border-slate-600 rounded flex items-center justify-center text-white">
+                                                                <Icon icon={formState.btn_second_icon} width="20" />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={formState.btn_second_icon}
+                                                                onChange={(e) => handleChange('btn_second_icon', e.target.value)}
+                                                                className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-4 pt-2 border-t border-slate-800">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="btn_second_is_premium"
+                                                        checked={formState.btn_second_is_premium}
+                                                        onChange={(e) => handleChange('btn_second_is_premium', e.target.checked)}
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                                    />
+                                                    <label htmlFor="btn_second_is_premium" className="text-sm text-slate-300 select-none cursor-pointer">
+                                                        Option Premium (Réservé aux membres)
+                                                    </label>
+                                                </div>
+
+                                                {/* Complex Draw Configuration */}
+                                                <div className="mt-4 pt-4 border-t border-slate-800 space-y-4">
+                                                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Configuration du tirage</h4>
+
+                                                    {/* Draw Count */}
+                                                    <div className="flex items-center gap-4">
+                                                        <label className="text-sm text-slate-300">Nombre de tirages additionnels</label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max="10"
+                                                            value={formState.btn_second_draw_count}
+                                                            onChange={(e) => handleChange('btn_second_draw_count', parseInt(e.target.value) || 2)}
+                                                            className="w-20 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white text-center"
+                                                        />
+                                                        <span className="text-xs text-slate-500">(Total: {1 + formState.btn_second_draw_count} tirages)</span>
+                                                    </div>
+
+                                                    {/* Include First */}
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            id="btn_second_include_first"
+                                                            checked={formState.btn_second_include_first}
+                                                            onChange={(e) => handleChange('btn_second_include_first', e.target.checked)}
+                                                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500/50"
+                                                        />
+                                                        <label htmlFor="btn_second_include_first" className="text-sm text-slate-300 select-none cursor-pointer">
+                                                            Inclure la première valeur dans le pool
+                                                        </label>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 ml-6">
+                                                        Si activé, la valeur du tirage simple peut réapparaître dans les tirages suivants.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
-                {/* --- TAB: DONNÉES (ITEMS) --- */}
-                {activeTab === 'data' && (
-                    <div className="animate-in fade-in duration-300 space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-white">Valeurs de tirage</h2>
-                            <button
-                                onClick={() => setIsAddingItem(true)}
-                                className="text-sm bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20"
-                            >
-                                <Icon icon="mdi:plus" /> Ajouter une valeur
-                            </button>
-                        </div>
-
-                        {/* DATA TABLE */}
-                        <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-900/50 text-slate-400 font-medium border-b border-slate-700">
-                                    <tr>
-                                        <th className="px-6 py-4 w-24">Image</th>
-                                        <th className="px-6 py-4">Nom</th>
-                                        <th className="px-6 py-4">Description</th>
-                                        <th className="px-6 py-4 w-20 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-700/50">
-                                    {drawType.items?.sort((a, b) => a.name.localeCompare(b.name)).map((item) => (
-                                        <tr key={item.id} className="hover:bg-slate-700/30 transition-colors group">
-                                            <td className="px-6 py-3">
-                                                <div className="w-12 h-12 bg-slate-900 rounded border border-slate-700 overflow-hidden">
-                                                    {item.image_url ? (
-                                                        <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                <div className="space-y-4 pt-4">
+                                    <h2 className="text-lg font-medium text-white border-b border-slate-700 pb-2 mb-4">Visuels</h2>
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {/* Thumbnail Image */}
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-slate-300">Thumbnail Image</label>
+                                            <div className="flex items-center gap-4 bg-slate-900 border border-slate-600 rounded-lg p-2">
+                                                <div className="w-16 h-16 bg-slate-800 rounded flex-shrink-0 overflow-hidden border border-slate-700">
+                                                    {formState.image_url ? (
+                                                        <img src={formState.image_url} className="w-full h-full object-cover" />
                                                     ) : <div className="w-full h-full flex items-center justify-center text-slate-600"><Icon icon="mdi:image-off" /></div>}
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-3 font-medium text-white">
-                                                <div>{item.name}</div>
-                                                <div className="text-[10px] text-slate-500 font-mono">{item.slug}</div>
-                                            </td>
-                                            <td className="px-6 py-3 text-slate-300 max-w-sm">
-                                                <div className="line-clamp-2 text-sm mb-1">
-                                                    {item.long_description}
-                                                </div>
-                                                {item.reversed_description && (
-                                                    <div className="mt-2 pt-2 border-t border-slate-700/50 flex gap-2">
-                                                        <Icon icon="mdi:rotate-3d-variant" className="text-orange-400 shrink-0 mt-0.5" />
-                                                        <span className="text-xs text-orange-300 italic line-clamp-2">
-                                                            {item.reversed_description}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-3 text-right">
-                                                <button
-                                                    onClick={() => setEditingItem(item)}
-                                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-                                                >
-                                                    <Icon icon="mdi:pencil" width="18" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {(!drawType.items || drawType.items.length === 0) && (
-                                        <tr>
-                                            <td colSpan={4} className="px-6 py-12 text-center text-slate-500 italic">
-                                                Aucune donnée disponible. Commencez par en ajouter une.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* EDIT / ADD MODAL */}
-                        {(isAddingItem || editingItem) && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                                <div className="bg-slate-800 rounded-xl border border-slate-600 shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                                    <form action={editingItem ? (fd) => handleUpdateItemInternal(editingItem.id, fd) : handleAddItem}>
-
-                                        <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
-                                            <h3 className="text-lg font-bold text-white">
-                                                {editingItem ? "Éditer la valeur" : "Nouvelle valeur"}
-                                            </h3>
-                                            <button type="button" onClick={() => { setIsAddingItem(false); setEditingItem(null); }} className="text-slate-400 hover:text-white"><Icon icon="mdi:close" width="24" /></button>
-                                        </div>
-
-                                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-1">
-                                                    <label className="text-xs font-bold text-slate-400 uppercase">Nom</label>
+                                                <div className="flex-1 space-y-2">
                                                     <input
-                                                        name="item_name"
-                                                        defaultValue={editingItem?.name}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            const slugInput = document.querySelector('input[name="item_slug"]') as HTMLInputElement;
-                                                            if (slugInput && (!slugInput.value || slugInput.value === '')) {
-                                                                slugInput.value = val.toLowerCase().trim()
-                                                                    .replace(/[^\w\s-]/g, '')
-                                                                    .replace(/[\s_-]+/g, '-')
-                                                                    .replace(/^-+|-+$/g, '');
+                                                        type="text"
+                                                        value={formState.image_url}
+                                                        onChange={(e) => handleChange('image_url', e.target.value)}
+                                                        placeholder="URL de l'image (ou charger un fichier)"
+                                                        className="w-full bg-slate-800 border-b border-slate-700 px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
+                                                    />
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const url = await handleUpload(file);
+                                                                if (url) handleChange('image_url', url);
                                                             }
                                                         }}
-                                                        className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none"
-                                                        required
-                                                        autoFocus
+                                                        className="w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"
                                                     />
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-xs font-bold text-slate-400 uppercase">Slug</label>
+                                            </div>
+                                        </div>
+
+                                        {/* Background Image */}
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-slate-300">Background Image (Optionnel)</label>
+                                            <div className="flex items-center gap-4 bg-slate-900 border border-slate-600 rounded-lg p-2">
+                                                <div className="w-16 h-16 bg-slate-800 rounded flex-shrink-0 overflow-hidden border border-slate-700">
+                                                    {formState.background_image_url ? (
+                                                        <img src={formState.background_image_url} className="w-full h-full object-cover" />
+                                                    ) : <div className="w-full h-full flex items-center justify-center text-slate-600"><Icon icon="mdi:image-off" /></div>}
+                                                </div>
+                                                <div className="flex-1 space-y-2">
                                                     <input
-                                                        name="item_slug"
-                                                        defaultValue={editingItem?.slug}
-                                                        className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-slate-300 font-mono focus:ring-1 focus:ring-blue-500 outline-none"
-                                                        placeholder="auto-généré"
-                                                        required
+                                                        type="text"
+                                                        value={formState.background_image_url}
+                                                        onChange={(e) => handleChange('background_image_url', e.target.value)}
+                                                        placeholder="URL de l'image (ou charger un fichier)"
+                                                        className="w-full bg-slate-800 border-b border-slate-700 px-2 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
+                                                    />
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const url = await handleUpload(file);
+                                                                if (url) handleChange('background_image_url', url);
+                                                            }
+                                                        }}
+                                                        className="w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"
                                                     />
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-slate-400 uppercase">Description Principale (Signification)</label>
-                                                <textarea name="item_long_desc" defaultValue={editingItem?.long_description} rows={5} className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none" required />
+                                <div className="pt-8 mt-8 border-t border-slate-700/50">
+                                    <div className="flex justify-between items-center p-4 rounded-lg bg-red-900/10 border border-red-900/20">
+                                        <div>
+                                            <h3 className="text-sm font-medium text-red-400">Zone de danger</h3>
+                                            <p className="text-xs text-red-400/60 mt-1">
+                                                La suppression est irréversible et effacera toutes les données associées.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDeleteConfirm(true)}
+                                            className="text-sm bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-4 py-2 rounded border border-red-500/20 transition-colors flex items-center gap-2"
+                                        >
+                                            <Icon icon="mdi:trash-can-outline" /> Supprimer ce tirage
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- TAB: DONNÉES (ITEMS) --- */}
+                    {activeTab === 'data' && (
+                        <div className="animate-in fade-in duration-300 space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-white">
+                                    Valeurs de tirage ({drawType.items?.length || 0} et {drawType.items?.filter(i => i.reversed_description).length || 0} inv.)
+                                </h2>
+                                <div className="flex gap-2">
+                                    <label className="text-sm bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded flex items-center gap-2 transition-colors cursor-pointer border border-slate-600">
+                                        <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+                                        <Icon icon="mdi:upload" /> Import
+                                    </label>
+                                    <button
+                                        onClick={handleExport}
+                                        className="text-sm bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded flex items-center gap-2 transition-colors border border-slate-600"
+                                    >
+                                        <Icon icon="mdi:download" /> Export
+                                    </button>
+                                    <button
+                                        onClick={() => setIsAddingItem(true)}
+                                        className="text-sm bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20 ml-2"
+                                    >
+                                        <Icon icon="mdi:plus" /> Ajouter une valeur
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* DATA TABLE */}
+                            <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-900/50 text-slate-400 font-medium border-b border-slate-700">
+                                        <tr>
+                                            <th className="px-6 py-4 w-24">Image</th>
+                                            <th className="px-6 py-4">Nom</th>
+                                            <th className="px-6 py-4">Description</th>
+                                            <th className="px-6 py-4 w-20 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700/50">
+                                        {drawType.items?.sort((a, b) => a.name.localeCompare(b.name)).map((item) => (
+                                            <tr key={item.id} className="hover:bg-slate-700/30 transition-colors group">
+                                                <td className="px-6 py-3">
+                                                    <div className="w-12 h-12 bg-slate-900 rounded border border-slate-700 overflow-hidden">
+                                                        {item.image_url ? (
+                                                            <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                                        ) : <div className="w-full h-full flex items-center justify-center text-slate-600"><Icon icon="mdi:image-off" /></div>}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-3 font-medium text-white">
+                                                    <div>{item.name}</div>
+                                                    <div className="text-[10px] text-slate-500 font-mono">{item.slug}</div>
+                                                </td>
+                                                <td className="px-6 py-3 text-slate-300 max-w-sm">
+                                                    <div className="line-clamp-2 text-sm mb-1">
+                                                        {item.long_description}
+                                                    </div>
+                                                    {item.reversed_description && (
+                                                        <div className="mt-2 pt-2 border-t border-slate-700/50 flex gap-2">
+                                                            <Icon icon="mdi:rotate-3d-variant" className="text-slate-400 shrink-0 mt-0.5" />
+                                                            <span className="text-sm text-slate-300 line-clamp-2">
+                                                                {item.reversed_description}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-3 text-right">
+                                                    <button
+                                                        onClick={() => setEditingItem(item)}
+                                                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                                                    >
+                                                        <Icon icon="mdi:pencil" width="18" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {(!drawType.items || drawType.items.length === 0) && (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-12 text-center text-slate-500 italic">
+                                                    Aucune donnée disponible. Commencez par en ajouter une.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* EDIT / ADD MODAL */}
+                            {(isAddingItem || editingItem) && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                                    <div className="bg-slate-800 rounded-xl border border-slate-600 shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                        <form action={editingItem ? (fd) => handleUpdateItemInternal(editingItem.id, fd) : handleAddItem}>
+
+                                            <div className="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
+                                                <h3 className="text-lg font-bold text-white">
+                                                    {editingItem ? "Éditer la valeur" : "Nouvelle valeur"}
+                                                </h3>
+                                                <button type="button" onClick={() => { setIsAddingItem(false); setEditingItem(null); }} className="text-slate-400 hover:text-white"><Icon icon="mdi:close" width="24" /></button>
                                             </div>
 
-                                            {/* Reversed Value Section */}
-                                            <div className="pt-2">
-                                                <ReversibleSection defaultReversed={editingItem?.reversed_description || ''} />
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-slate-400 uppercase">Image</label>
-                                                <div className="flex gap-4">
-                                                    <div className="flex-1 space-y-2">
+                                            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-bold text-slate-400 uppercase">Nom</label>
                                                         <input
-                                                            name="item_image"
-                                                            value={itemImagePreview}
-                                                            onChange={(e) => setItemImagePreview(e.target.value)}
-                                                            className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none"
-                                                            placeholder="URL de l'image"
-                                                        />
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            onChange={async (e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) {
-                                                                    const url = await handleUpload(file);
-                                                                    if (url) setItemImagePreview(url);
-                                                                }
-                                                            }}
-                                                            className="w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"
+                                                            name="item_name"
+                                                            value={itemName}
+                                                            onChange={(e) => handleItemNameChange(e.target.value)}
+                                                            className="w-full bg-slate-900 border-slate-600 border rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                                                            required
+                                                            autoFocus
                                                         />
                                                     </div>
-                                                    <div className="w-20 h-20 bg-slate-900 border border-slate-600 rounded flex items-center justify-center shrink-0 overflow-hidden">
-                                                        {itemImagePreview ? (
-                                                            <img src={itemImagePreview} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <Icon icon="mdi:image" className="text-slate-600" width="24" />
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                                                            Slug
+                                                            {checkingSlug && <Icon icon="mdi:loading" className="animate-spin" width="14" />}
+                                                        </label>
+                                                        <input
+                                                            name="item_slug"
+                                                            value={itemSlug}
+                                                            onChange={(e) => { setItemSlug(e.target.value); setSlugError(null); }}
+                                                            onBlur={() => itemSlug && validateSlug(itemSlug)}
+                                                            disabled={!itemName}
+                                                            className={clsx(
+                                                                "w-full bg-slate-900 border rounded px-3 py-2 text-sm font-mono focus:ring-1 focus:ring-blue-500 outline-none",
+                                                                !itemName ? "opacity-50 cursor-not-allowed text-slate-500" : "text-slate-300",
+                                                                slugError ? "border-red-500" : "border-slate-600"
+                                                            )}
+                                                            placeholder={itemName ? "auto-généré" : "Remplir le nom d'abord"}
+                                                            required
+                                                        />
+                                                        {slugError && (
+                                                            <p className="text-xs text-red-400 mt-1">{slugError}</p>
                                                         )}
                                                     </div>
                                                 </div>
+
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-slate-400 uppercase">Description Principale (Signification)</label>
+                                                    <textarea name="item_long_desc" defaultValue={editingItem?.long_description} rows={5} className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none" required />
+                                                </div>
+
+                                                {/* Reversed Value Section */}
+                                                <div className="pt-2">
+                                                    <ReversibleSection defaultReversed={editingItem?.reversed_description || ''} />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-slate-400 uppercase">Image</label>
+                                                    <div className="flex gap-4">
+                                                        <div className="flex-1 space-y-2">
+                                                            <input
+                                                                name="item_image"
+                                                                value={itemImagePreview}
+                                                                onChange={(e) => setItemImagePreview(e.target.value)}
+                                                                className="w-full bg-slate-900 border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                                                                placeholder="URL de l'image"
+                                                            />
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                onChange={async (e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (file) {
+                                                                        const url = await handleUpload(file);
+                                                                        if (url) setItemImagePreview(url);
+                                                                    }
+                                                                }}
+                                                                className="w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"
+                                                            />
+                                                        </div>
+                                                        <div className="w-20 h-20 bg-slate-900 border border-slate-600 rounded flex items-center justify-center shrink-0 overflow-hidden">
+                                                            {itemImagePreview ? (
+                                                                <img src={itemImagePreview} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <Icon icon="mdi:image" className="text-slate-600" width="24" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                             </div>
 
-                                        </div>
-
-                                        <div className="px-6 py-4 border-t border-slate-700 bg-slate-900/50 flex justify-between items-center">
-                                            <div>
-                                                {editingItem && (
+                                            <div className="px-6 py-4 border-t border-slate-700 bg-slate-900/50 flex justify-between items-center">
+                                                <div>
+                                                    {editingItem && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteItemInternal(editingItem.id)}
+                                                            className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1 px-3 py-2 hover:bg-red-500/10 rounded transition-colors"
+                                                        >
+                                                            <Icon icon="mdi:trash-can-outline" /> Supprimer
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-3">
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDeleteItemInternal(editingItem.id)}
-                                                        className="text-red-400 hover:text-red-300 text-sm flex items-center gap-1 px-3 py-2 hover:bg-red-500/10 rounded transition-colors"
+                                                        onClick={() => { setIsAddingItem(false); setEditingItem(null); }}
+                                                        className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
                                                     >
-                                                        <Icon icon="mdi:trash-can-outline" /> Supprimer
+                                                        Annuler
                                                     </button>
-                                                )}
+                                                    <button
+                                                        type="submit"
+                                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-medium text-sm transition-colors shadow-lg shadow-blue-900/20"
+                                                    >
+                                                        {editingItem ? "Enregistrer" : "Créer"}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="flex gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => { setIsAddingItem(false); setEditingItem(null); }}
-                                                    className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
-                                                >
-                                                    Annuler
-                                                </button>
-                                                <button
-                                                    type="submit"
-                                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-medium text-sm transition-colors shadow-lg shadow-blue-900/20"
-                                                >
-                                                    {editingItem ? "Enregistrer" : "Créer"}
-                                                </button>
-                                            </div>
-                                        </div>
 
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )
-                }
+                            )}
+                        </div>
+                    )
+                    }
+                </div >
             </div >
-        </div >
+        </>
     );
 }
 
@@ -816,20 +1110,20 @@ function ReversibleSection({ defaultReversed }: { defaultReversed: string }) {
                     id="is_reversible"
                     checked={isReversible}
                     onChange={(e) => setIsReversible(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-orange-500 focus:ring-orange-500/50"
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500/50"
                 />
-                <label htmlFor="is_reversible" className="text-sm font-medium text-orange-200 select-none cursor-pointer flex items-center gap-2">
+                <label htmlFor="is_reversible" className="text-sm font-medium text-slate-300 select-none cursor-pointer flex items-center gap-2">
                     <Icon icon="mdi:rotate-3d-variant" /> Valeur inversable ?
                 </label>
             </div>
             {isReversible && (
                 <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
-                    <label className="text-xs font-bold text-orange-400 uppercase">Description (Sens Inversé)</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Description (Sens Inversé)</label>
                     <textarea
                         name="item_reversed_desc"
                         defaultValue={defaultReversed}
                         rows={3}
-                        className="w-full bg-slate-800 border-orange-900/30 border rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none placeholder:text-slate-600"
+                        className="w-full bg-slate-900 border-slate-600 border rounded px-3 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500 outline-none placeholder:text-slate-600"
                         placeholder="Signification si la carte/rune sort à l'envers..."
                     />
                 </div>

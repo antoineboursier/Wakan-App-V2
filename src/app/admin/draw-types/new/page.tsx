@@ -19,19 +19,15 @@ export default function NewDrawTypePage() {
             const rawData = {
                 title: formData.get('title') as string,
                 slug: formData.get('slug') as string,
-                description: formData.get('description') as string,
-                image_url: formData.get('image_url') as string,
-                intro_title: formData.get('intro_title') as string,
-                intro_subtitle: formData.get('intro_subtitle') as string,
-                is_active: formData.get('is_active') === 'on',
+                is_active: false, // Force Draft on creation
             };
 
-            await createDrawType(rawData);
-            router.push('/admin/draw-types');
+            // @ts-ignore
+            const newType = await createDrawType(rawData);
+            router.push(`/admin/draw-types/${newType.id}`);
         } catch (e) {
             setError(e instanceof Error ? e.message : "Une erreur est survenue");
-        } finally {
-            setLoading(false);
+            setLoading(false); // Only stop loading on error, otherwise we are redirecting
         }
     }
 
@@ -41,77 +37,41 @@ export default function NewDrawTypePage() {
                 <Link href="/admin/draw-types" className="text-slate-400 hover:text-white transition-colors">
                     <Icon icon="mdi:arrow-left" className="w-6 h-6" />
                 </Link>
-                <h1 className="text-2xl font-bold text-white">Nouveau Type de Tirage</h1>
+                <div className="flex-1">
+                    <h1 className="text-2xl font-bold text-white">Nouveau Type de Tirage</h1>
+                    <p className="text-slate-400 text-sm">Commencez par nommer votre tirage. Vous pourrez configurer tous les détails ensuite.</p>
+                </div>
             </div>
 
             <form id="admin-new-type-form" action={handleSubmit} className="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
 
                 {/* --- Main Info --- */}
                 <div id="section-general-info" className="space-y-4">
-                    <h2 className="text-lg font-medium text-white border-b border-slate-700 pb-2">Informations Générales</h2>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label htmlFor="title" className="block text-sm font-medium text-slate-300">Titre (Requis)</label>
-                            <input
-                                type="text" name="title" id="title" required
-                                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label htmlFor="slug" className="block text-sm font-medium text-slate-300">Slug (Unique)</label>
-                            <input
-                                type="text" name="slug" id="slug" required
-                                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            />
-                        </div>
-                    </div>
-
                     <div className="space-y-2">
-                        <label htmlFor="description" className="block text-sm font-medium text-slate-300">Description (Interne)</label>
-                        <textarea
-                            name="description" id="description" rows={3}
-                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label htmlFor="image_url" className="block text-sm font-medium text-slate-300">Image URL (Thumbnail)</label>
+                        <label htmlFor="title" className="block text-sm font-medium text-slate-300">Titre (Requis)</label>
                         <input
-                            type="text" name="image_url" id="image_url" placeholder="/backgrounds/journal.png"
-                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                    </div>
-                </div>
-
-                {/* --- Intro Content --- */}
-                <div id="section-intro-content" className="space-y-4 pt-4">
-                    <h2 className="text-lg font-medium text-white border-b border-slate-700 pb-2">Contenu Intro</h2>
-
-                    <div className="space-y-2">
-                        <label htmlFor="intro_title" className="block text-sm font-medium text-slate-300">Titre Intro</label>
-                        <input
-                            type="text" name="intro_title" id="intro_title"
+                            type="text" name="title" id="title" required
+                            placeholder="Ex: Oracle des Runes"
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                const slugInput = document.getElementById('slug') as HTMLInputElement;
+                                if (slugInput && !slugInput.value) {
+                                    slugInput.value = val.toLowerCase().trim()
+                                        .replace(/[^\w\s-]/g, '')
+                                        .replace(/[\s_-]+/g, '-')
+                                        .replace(/^-+|-+$/g, '');
+                                }
+                            }}
                             className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label htmlFor="intro_subtitle" className="block text-sm font-medium text-slate-300">Sous-titre Intro</label>
+                        <label htmlFor="slug" className="block text-sm font-medium text-slate-300">Slug (Unique - URL)</label>
                         <input
-                            type="text" name="intro_subtitle" id="intro_subtitle"
-                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            type="text" name="slug" id="slug" required
+                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                     </div>
-                </div>
-
-                {/* --- Status --- */}
-                <div className="pt-4 flex items-center gap-3">
-                    <input
-                        type="checkbox" name="is_active" id="is_active"
-                        defaultChecked
-                        className="w-5 h-5 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label htmlFor="is_active" className="text-sm font-medium text-slate-300">Actif (Visible dans l'app)</label>
                 </div>
 
                 {/* --- Actions --- */}
@@ -125,9 +85,9 @@ export default function NewDrawTypePage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="px-6 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                        {loading ? 'Création...' : 'Créer le Type'}
+                        {loading ? 'Création...' : 'Créer et Configurer'} <Icon icon="mdi:arrow-right" />
                     </button>
                 </div>
 

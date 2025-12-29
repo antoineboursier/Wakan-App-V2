@@ -73,6 +73,17 @@ body {
   font-family: var(--font-league-spartan), sans-serif;
 }
 
+/* Cursor pointer pour tous les éléments interactifs */
+button,
+[role="button"],
+a,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select {
+  cursor: pointer;
+}
+
 h1,
 h2,
 h3,
@@ -293,4 +304,95 @@ h6 {
 /* --- Effects --- */
 .effect-glow-yellow {
   filter: drop-shadow(0 2px 16px rgba(246, 223, 49, 0.8));
+}
+
+/* --- Page Layout Components --- */
+
+/* Base page wrapper - full screen with background support */
+.page-wrapper {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Page content container - centered with max-width */
+.page-content {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--sizes-l);
+  gap: var(--sizes-l);
+  max-width: 80rem;
+  /* ~1280px */
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Narrow page content (for detail pages) */
+.page-content-narrow {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 32rem;
+  /* ~512px */
+  display: flex;
+  flex-direction: column;
+  gap: var(--sizes-l);
+}
+
+/* Card container with gradient background (for results) */
+.card-gradient {
+  display: flex;
+  padding: var(--sizes-l);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sizes-l);
+  align-self: stretch;
+  border-radius: var(--sizes-s);
+  background: linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%);
+  border: none;
+}
+
+/* Header bar (back + share) */
+.page-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Grid for cards */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--sizes-l);
+  width: 100%;
+  justify-items: center;
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Empty state */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 5rem 0;
+  color: var(--text-disabled);
+  font-style: italic;
 }

@@ -44,7 +44,7 @@ export function Navigation() {
 
             {/* La TabBar elle-même (interactive) */}
             <nav
-                className="pointer-events-auto flex items-start p-[8px] gap-[4px] rounded-[16px] w-full max-w-md transition-all"
+                className="pointer-events-auto flex items-start pt-[10px] pb-[6px] gap-[4px] rounded-[16px] w-full max-w-md transition-all"
                 style={{
                     // Gradient spécifique demandé
                     background: "linear-gradient(90deg, var(--background-800, #1C3039) 0%, #365C6E 100%)",
@@ -61,7 +61,7 @@ export function Navigation() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex flex-col items-center flex-1 py-1 gap-1 transition-opacity duration-200 ${activeClass}`}
+                            className={`flex flex-col items-center flex-1 py-1 gap-[6px] transition-opacity duration-200 ${activeClass}`}
                             style={{ padding: "4px 0" }} // Padding explicite Figma zones de clic
                         >
                             <div className="relative">

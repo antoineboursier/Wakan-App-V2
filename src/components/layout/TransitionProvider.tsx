@@ -2,130 +2,158 @@
 
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useContext, useEffect, useRef } from "react";
-import { LayoutRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { useEffect, useRef, useState } from "react";
 
-// --- Configuration des ordres de TabBar ---
-const TAB_ORDER = ["/", "/tirages", "/quiz", "/profil", "/journal"];
+// --- Définition des pages principales et sous-pages ---
+const MAIN_PAGES = ["/", "/tirages", "/quiz", "/profil", "/journal"];
 
-function getTabOrder(path: string) {
-    // On ne garde que la racine ou le path exact pour l'ordre
-    // Si c'est une sous-page, ça n'a pas d'index "Tab" direct, on retourne -1
-    // Sauf si on veut que /tirages/xyz soit considéré comme "Tirages" (index 1)
+function isMainPage(path: string): boolean {
+    // Exact match
+    if (MAIN_PAGES.includes(path)) return true;
+    // Si c'est juste query param sur une main page ? (ex: /tirages?search=...)
+    // On considère que le pathname de base suffit.
+    return false;
+}
 
-    // Stratégie simple : Match exact ou préfixe
-    const index = TAB_ORDER.findIndex(p => p !== "/" ? path.startsWith(p) : path === "/");
-    return index;
+function isSubPage(path: string): boolean {
+    if (isMainPage(path)) return false;
+    // Une sous-page commence par une root connue (ex: /tirages/rune)
+    return MAIN_PAGES.some(main => main !== "/" && path.startsWith(main + "/"));
+}
+
+type TransitionType = "none" | "push" | "pop" | "tabs";
+
+function getTransitionType(currentPath: string, prevPath: string): TransitionType {
+    if (currentPath === prevPath) return "none";
+
+    const currentIsMain = isMainPage(currentPath);
+    const prevIsMain = isMainPage(prevPath);
+    const currentIsSub = isSubPage(currentPath);
+    const prevIsSub = isSubPage(prevPath);
+
+    // Entre pages principales -> Pas de transition (ou fade discret)
+    if (currentIsMain && prevIsMain) {
+        return "none";
+    }
+
+    // Main -> Sub -> PUSH (volet arrive de droite, Main reste en dessous)
+    if (prevIsMain && currentIsSub) {
+        return "push";
+    }
+
+    // Sub -> Main -> POP (volet part à droite, Main réapparaît en dessous)
+    if (prevIsSub && currentIsMain) {
+        return "pop";
+    }
+
+    // Sub -> Sub (Deep nav) -> PUSH
+    if (prevIsSub && currentIsSub) {
+        return "push";
+    }
+
+    return "none";
 }
 
 export function TransitionProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const prevPathRef = useRef(pathname);
 
-    const directionRef = useRef({ direction: 0, mode: "tab" as "tab" | "stack" });
+    // On garde le type de transition en ref pour que les variants y accèdent sans re-render intempestif
+    const transitionTypeRef = useRef<TransitionType>("none");
 
-    // Calcul de la direction avant le rendu (pour que 'custom' le chope)
-    const currentPath = pathname;
-    const prevPath = prevPathRef.current;
-
-    // Si le path a changé
-    if (currentPath !== prevPath) {
-        const curIndex = getTabOrder(currentPath);
-        const prevIndex = getTabOrder(prevPath);
-
-        // Cas 1 : Navigation TabBar (Top Level)
-        if (curIndex !== -1 && prevIndex !== -1 && curIndex !== prevIndex) {
-            directionRef.current = { direction: curIndex > prevIndex ? 1 : -1, mode: 'tab' };
-        }
-        // Cas 2 : Deep linking (Aller vers une sous-page) -> STACK PUSH
-        else if (currentPath.startsWith(prevPath) && prevPath !== "/") {
-            directionRef.current = { direction: 1, mode: 'stack' };
-        }
-        // Cas 3 : Retour arrière (Revenir d'une sous-page) -> STACK POP
-        else if (prevPath.startsWith(currentPath) && currentPath !== "/") {
-            directionRef.current = { direction: -1, mode: 'stack' };
-        }
-        // Cas par défaut
-        else {
-            directionRef.current = { direction: 0, mode: 'tab' };
-        }
-
-        prevPathRef.current = currentPath;
+    // Calcul immédiat du type de transition
+    if (pathname !== prevPathRef.current) {
+        transitionTypeRef.current = getTransitionType(pathname, prevPathRef.current);
+        prevPathRef.current = pathname;
     }
 
-    const trans = { duration: 0.35, ease: [0.25, 1, 0.5, 1] as const };
+    // Scroll handling: Reset scroll ONLY if needed, or rely on layout
+    useEffect(() => {
+        // En mode Pop (Retour), Idéalement on voudrait restaurer le scroll, 
+        // mais Next.js le fait parfois nativement.
+        // On force le haut de page pour éviter les sauts bizarres dans les layouts absolus.
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }, [pathname]);
 
-    // Variantes d'animation
-    // "custom" est l'objet passée via <motion.div custom={directionRef.current}>
+    const animDuration = 0.4;
+    const animEase = [0.32, 0.72, 0, 1] as const;
+
+    // Simulation de "Stack":
+    // Push: Enter vient de droite (+100%). Exit part en parallax (-20% opacity).
+    // Pop: Enter vient de parallax (-20% opacity). Exit part à droite (+100%).
     const variants: Variants = {
-        enter: ({ direction, mode }: { direction: number, mode: "tab" | "stack" }) => {
-            // Stack Push: Le nouveau vient de la droite (surcouche)
-            if (mode === 'stack' && direction === 1) {
-                return { x: "100%", zIndex: 50, position: "absolute", top: 0, width: "100%", boxShadow: "-5px 0 25px rgba(0,0,0,0.1)" };
+        enter: (type: TransitionType) => {
+            if (type === "push") {
+                // La nouvelle page (Sub) arrive de la droite
+                return { x: "100%", opacity: 1, zIndex: 50 };
             }
-            // Stack Pop: Le "nouveau" (le parent) revient de la gauche (parallax)
-            if (mode === 'stack' && direction === -1) {
-                return { x: "-25%", zIndex: 0, position: "absolute", top: 0, width: "100%", opacity: 0.5 };
+            if (type === "pop") {
+                // La nouvelle page (Main) réapparaît du fond (légèrement sombre/décalée)
+                return { x: "-20%", opacity: 0.8, zIndex: 0 };
             }
-
-            // Tab: Classique
-            return {
-                x: direction > 0 ? "100%" : "-100%",
-                zIndex: 1,
-                position: "absolute",
-                top: 0,
-                width: "100%",
-                opacity: 0 // Fade in pour tab
-            };
+            // None
+            return { x: 0, opacity: 0, zIndex: 1 };
         },
-        center: ({ mode, direction }: { direction: number, mode: "tab" | "stack" }) => ({
-            x: 0,
-            // Si c'est un push ou si on est la sous-page (stack pop source), on est au dessus
-            zIndex: (mode === 'stack' && direction === 1) ? 50 : 10,
-            opacity: 1,
-            position: "relative",
-            width: "100%",
-            transition: trans
-        }),
-        exit: ({ direction, mode }: { direction: number, mode: "tab" | "stack" }) => {
-            // Stack Push: L'ancien (le parent) part en parallax gauche et s'assombrit
-            if (mode === 'stack' && direction === 1) {
-                return { x: "-25%", zIndex: 0, position: "absolute", top: 0, width: "100%", opacity: 0.5, transition: trans };
+        center: (type: TransitionType) => {
+            if (type === "push" || type === "pop") {
+                return {
+                    x: 0,
+                    opacity: 1,
+                    zIndex: type === "push" ? 50 : 0, // Si on push, on est au dessus. Si on pop, on est en dessous (on attend que l'autre parte).
+                    transition: { duration: animDuration, ease: animEase }
+                };
             }
-            // Stack Pop: L'ancien (la sous-page) part vers la droite
-            if (mode === 'stack' && direction === -1) {
-                return { x: "100%", zIndex: 50, position: "absolute", top: 0, width: "100%", boxShadow: "-5px 0 25px rgba(0,0,0,0.1)", transition: trans };
+            // None: Fade in rapide
+            return { x: 0, opacity: 1, zIndex: 1, transition: { duration: 0.2 } };
+        },
+        exit: (type: TransitionType) => {
+            if (type === "push") {
+                // L'ancienne page (Main) recule un peu et s'assombrit
+                return {
+                    x: "-20%",
+                    opacity: 0.8,
+                    zIndex: 0,
+                    transition: { duration: animDuration, ease: animEase }
+                };
             }
-
-            // Tab: Sortie Parallax légère
-            return {
-                x: direction > 0 ? "-25%" : "25%",
-                zIndex: 0,
-                position: "absolute",
-                top: 0,
-                width: "100%",
-                opacity: 0,
-                transition: trans
-            };
+            if (type === "pop") {
+                // L'ancienne page (Sub) repart à droite
+                return {
+                    x: "100%",
+                    opacity: 1,
+                    zIndex: 50,
+                    transition: { duration: animDuration, ease: animEase }
+                };
+            }
+            // None: Fade out
+            return { x: 0, opacity: 0, zIndex: 1, transition: { duration: 0.2 } };
         }
     };
 
     return (
-        <AnimatePresence mode="popLayout" custom={directionRef.current} initial={false}>
-            <motion.div
-                key={pathname}
-                custom={directionRef.current}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="w-full h-full pt-8" // Padding moved here to prevent jumps during absolute positioning
-            >
-                {/* 
-                   FrozenRouter logic omitted for simplicity. 
-                */}
-                {children}
-            </motion.div>
-        </AnimatePresence>
+        <div className="relative w-full min-h-screen bg-[var(--background-800)] overflow-x-hidden">
+            <AnimatePresence mode="popLayout" custom={transitionTypeRef.current} initial={false}>
+                <motion.div
+                    key={pathname}
+                    custom={transitionTypeRef.current}
+                    variants={variants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="w-full min-h-screen bg-[var(--background-800)] shadow-2xl"
+                    style={{
+                        position: "absolute", // Nécessaire pour popLayout pour superposer les pages
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        overflowY: "auto", // Chaque page gère son scroll
+                        overflowX: "hidden"
+                    }}
+                >
+                    {children}
+                </motion.div>
+            </AnimatePresence>
+        </div>
     );
 }

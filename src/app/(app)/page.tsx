@@ -58,7 +58,7 @@ export default function DashboardPage() {
       <PageBackground imageSrc="/backgrounds/home.png" alt="Dashboard Cactus Moon" />
 
       {/* --- HEADER (LOGO) --- */}
-      <header className="relative w-full z-20 flex justify-center pt-4" id="dashboard-header">
+      <header className="relative w-full z-20 flex justify-center mt-16" id="dashboard-header">
         <h1 className="sr-only">Wakan - Tableau de bord</h1>
         {/* Composant Logo Animé */}
         <WakanLogo />
@@ -126,7 +126,7 @@ export default function DashboardPage() {
             {/* Widget Cycle Day */}
             <GlassCard
               id="widget-moon-cycle"
-              className="flex flex-col items-center justify-center p-2 h-40"
+              className="flex flex-col items-center justify-center p-2 h-40 border-none"
               style={{
                 background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
                 backdropFilter: 'blur(4px)',
@@ -172,7 +172,7 @@ export default function DashboardPage() {
             {/* Widget Distance (Périgée/Apogée) */}
             <GlassCard
               id="widget-distance"
-              className="flex items-center justify-between px-5 py-0 h-16"
+              className="flex items-center justify-between px-5 py-0 h-16 border-none"
               style={{
                 background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
                 backdropFilter: 'blur(4px)',
@@ -204,7 +204,7 @@ export default function DashboardPage() {
           {/* Col 2: Phase Lunaire */}
           <GlassCard
             id="widget-moon-phase"
-            className="flex flex-col items-center justify-center p-5 text-center min-h-[236px]"
+            className="flex flex-col items-center justify-center p-5 text-center min-h-[236px] border-none"
             style={{
               background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
               backdropFilter: 'blur(4px)',
@@ -311,7 +311,7 @@ export default function DashboardPage() {
           {/* Widget: Signe Lunaire */}
           <GlassCard
             id="widget-zodiac"
-            className="col-span-1 flex flex-col items-center justify-center px-4 py-2 h-auto"
+            className="col-span-1 flex flex-col items-center justify-center px-4 py-2 h-auto border-none"
             style={{
               background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
               backdropFilter: 'blur(4px)',
@@ -341,7 +341,7 @@ export default function DashboardPage() {
 
             {/* Élément */}
             <GlassCard
-              className="w-full p-4 flex items-center justify-between"
+              className="w-full p-4 flex items-center justify-between border-none"
               style={{
                 background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
                 backdropFilter: 'blur(4px)',
@@ -367,7 +367,7 @@ export default function DashboardPage() {
 
             {/* Noeud Lunaire */}
             <GlassCard
-              className="w-full p-4 flex flex-col justify-center gap-1.5 flex-1"
+              className="w-full p-4 flex flex-col justify-center gap-1.5 flex-1 border-none"
               style={{
                 background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
                 backdropFilter: 'blur(4px)',
@@ -417,7 +417,7 @@ export default function DashboardPage() {
         </section>
 
         {/* ZONE D: Actions & Separator */}
-        <section id="zone-d-astro-cta" className="w-full flex flex-col items-center gap-2 mt-6 mb-0">
+        <section id="zone-d-astro-cta" className="w-full flex flex-col items-center gap-2 mt-2 mb-0">
 
           {/* Nouveau Bouton Composant */}
           <Button

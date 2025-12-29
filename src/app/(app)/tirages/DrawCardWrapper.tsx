@@ -5,15 +5,14 @@ import { useRouter } from "next/navigation";
 import { DrawIntroCard } from "@/components/draws/DrawIntroCard";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useDailyFreeLimit } from "@/hooks/useDailyFreeLimit";
-import { Modal } from "@/components/ui/Modal";
-import { performDraw, DrawResult } from "@/app/actions/draws";
-import { MorphingLoader } from "@/components/animations/MorphingLoader";
+import { performDraw } from "@/app/actions/draws";
 
 interface DrawCardWrapperProps {
     slug: string;
     title: string;
     subtitle: string;
     imageUrl?: string | null;
+    standalone?: boolean;
 
     // Config
     btnMainLabel?: string | null;
@@ -23,6 +22,11 @@ interface DrawCardWrapperProps {
     btnSecondEnabled?: boolean;
     isMainPremium?: boolean;
     isSecondBtnPremium?: boolean;
+    btnMainLimitEnabled?: boolean;
+    btnMainLimitCount?: number;
+    // Complex draw config
+    btnSecondDrawCount?: number; // Number of additional draws
+    btnSecondIncludeFirst?: boolean; // Include first draw value in pool
 }
 
 export function DrawCardWrapper({
@@ -36,26 +40,56 @@ export function DrawCardWrapper({
     btnSecondIcon,
     btnSecondEnabled,
     isMainPremium,
-    isSecondBtnPremium
+    isSecondBtnPremium,
+    btnMainLimitCount = 1,
+    btnMainLimitEnabled = false,
+    btnSecondDrawCount = 2,
+    btnSecondIncludeFirst = false,
+    standalone = false
 }: DrawCardWrapperProps) {
     const router = useRouter();
     const { isPremium } = useEntitlements();
-    const { canDrawFree, loadinglimit, resetLimit } = useDailyFreeLimit(slug);
 
-    // UI State
+    // Pass limit options to hook
+    const {
+        canDrawFree,
+        remainingDraws,
+        loadingLimit,
+        consumeFreeDraw,
+        resetLimit
+    } = useDailyFreeLimit(slug, {
+        limitCount: btnMainLimitCount,
+        limitEnabled: btnMainLimitEnabled
+    });
+
     const [isDrawing, setIsDrawing] = useState(false);
-    const [drawResult, setDrawResult] = useState<DrawResult | null>(null);
 
-    const startDrawSequence = async (count: 1 | 3) => {
+    const performDrawAction = async (count: number, isComplex: boolean = false) => {
         setIsDrawing(true);
-        setDrawResult(null);
-
         try {
-            // 1. Perform Draw on Server (fetches winners + shuffle items)
+            // Perform Draw on Server
             const result = await performDraw(slug, count);
-            setDrawResult(result);
-            // Modal opens because isDrawing=true. 
-            // We wait for MorphingLoader to call onComplete.
+
+            // Consume limit if applicable (only for non-premium users)
+            if (!isPremium) {
+                consumeFreeDraw();
+            }
+
+            // Build Query for navigation
+            const ids = result.winners.map(w => w.id).join(',');
+            const reversedIds = result.winners.filter(w => w.is_reversed).map(w => w.id).join(',');
+
+            const query = new URLSearchParams();
+            query.set('ids', ids);
+            if (reversedIds) query.set('r_ids', reversedIds);
+            query.set('animate', 'true');
+            const distractorIds = result.distractors.map(d => d.id).join(',');
+            if (distractorIds) query.set('d_ids', distractorIds);
+            if (isComplex) query.set('complex', 'true');
+
+            // Navigate to the result view
+            router.push(`/tirages/${slug}?${query.toString()}`);
+
         } catch (e) {
             console.error("Draw failed", e);
             alert("Une erreur est survenue lors du tirage.");
@@ -63,84 +97,58 @@ export function DrawCardWrapper({
         }
     };
 
-    const handleAnimationComplete = () => {
-        if (!drawResult) return;
-        const ids = drawResult.winners.map(w => w.id).join(',');
-        const reversedIds = drawResult.winners
-            .filter(w => w.is_reversed)
-            .map(w => w.id)
-            .join(',');
-
-        const query = new URLSearchParams();
-        query.set('ids', ids);
-        query.set('count', drawResult.winners.length.toString());
-        if (reversedIds) query.set('r_ids', reversedIds);
-
-        // 2. Navigate with IDs to display result
-        router.push(`/tirages/${slug}/result?${query.toString()}`);
-    };
-
     const handleDrawOne = () => {
         // Validation Logic for Main Draw
         if (isMainPremium && !isPremium) {
-            alert("Ce tirage est réservé aux membres Premium");
-            return;
-        }
-        if (!isPremium && !canDrawFree && !isMainPremium) {
-            // Limit reached
+            alert("Réservé aux membres Premium !");
             return;
         }
 
-        startDrawSequence(1);
+        // Check limit for non-premium users
+        if (btnMainLimitEnabled && !isPremium && !canDrawFree) {
+            return; // Limit reached, button should be disabled anyway
+        }
+
+        performDrawAction(1, false);
     };
 
-    const handleDrawThree = () => {
-        // Validation Logic for Second Draw
+    const handleDrawComplex = () => {
         if (isSecondBtnPremium && !isPremium) {
             alert("Réservé aux membres Premium !");
             return;
         }
-        startDrawSequence(3);
+        // Total draws = 1 (first) + btnSecondDrawCount (additional)
+        const totalDraws = 1 + btnSecondDrawCount;
+        performDrawAction(totalDraws, true);
     };
 
     return (
-        <>
-            <DrawIntroCard
-                title={title}
-                subtitle={subtitle}
-                imageUrl={imageUrl || undefined}
-                onDrawOne={handleDrawOne}
-                onDrawThree={handleDrawThree}
-                canDrawFree={canDrawFree}
-                isPremium={isPremium}
-                isLoading={loadinglimit}
-                onResetLimit={resetLimit}
+        <DrawIntroCard
+            title={title}
+            subtitle={subtitle}
+            imageUrl={imageUrl ?? undefined}
 
-                // Config Props
-                btnMainLabel={btnMainLabel || undefined}
-                btnMainIcon={btnMainIcon || undefined}
-                btnSecondLabel={btnSecondLabel || undefined}
-                btnSecondIcon={btnSecondIcon || undefined}
-                btnSecondEnabled={btnSecondEnabled}
-                isMainPremium={isMainPremium}
-                isSecondBtnPremium={isSecondBtnPremium}
-            />
+            // Main Button
+            btnMainLabel={btnMainLabel ?? undefined}
+            btnMainIcon={btnMainIcon ?? undefined}
+            onDrawOne={handleDrawOne}
+            isPremium={isPremium}
+            isMainPremium={isMainPremium}
 
-            <Modal isOpen={isDrawing} onClose={() => { /* Prevent closing */ }}>
-                {/* Only show loader when we have data to animate */}
-                {drawResult ? (
-                    <MorphingLoader
-                        images={drawResult.distractors.map(d => d.image_url || '/placeholder.png')}
-                        finalImage={drawResult.winners[0].image_url || '/placeholder.png'}
-                        onComplete={handleAnimationComplete}
-                    />
-                ) : (
-                    // Optional: Simple spinner while waiting for performDraw
-                    <div className="flex items-center justify-center p-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent-500)]"></div>
-                    </div>
-                )}
-            </Modal>
-        </>
+            // Secondary Button
+            btnSecondLabel={btnSecondLabel ?? undefined}
+            btnSecondIcon={btnSecondIcon ?? undefined}
+            onDrawThree={handleDrawComplex}
+            btnSecondEnabled={btnSecondEnabled}
+            isSecondBtnPremium={isSecondBtnPremium}
+
+            // Limit display
+            btnMainLimitEnabled={btnMainLimitEnabled}
+            btnMainLimitCount={btnMainLimitCount}
+            remainingDraws={remainingDraws}
+            canDrawFree={canDrawFree}
+            onResetLimit={resetLimit}
+        />
     );
 }
+
