@@ -71,6 +71,11 @@ body {
   --font-heading: var(--font-skranji);
   --font-body: var(--font-league-spartan);
   font-family: var(--font-league-spartan), sans-serif;
+  overflow: hidden;
+  /* Empêche le scroll du body, délégué au conteneur de page */
+  overscroll-behavior-y: none;
+  /* Empêche le rebond élastique natif iOS au niveau du body */
+  height: 100dvh;
 }
 
 /* Cursor pointer pour tous les éléments interactifs */
@@ -395,4 +400,17 @@ h6 {
   padding: 5rem 0;
   color: var(--text-disabled);
   font-style: italic;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

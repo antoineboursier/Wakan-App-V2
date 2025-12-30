@@ -33,7 +33,7 @@ export function Button({
 
             {/* L'icône (si présente) */}
             {icon && (
-                <span className="flex items-center justify-center shrink-0 w-5 h-5" aria-hidden="true">
+                <span className="flex items-center justify-center shrink-0 w-5 h-5 text-current" aria-hidden="true">
                     {icon}
                 </span>
             )}

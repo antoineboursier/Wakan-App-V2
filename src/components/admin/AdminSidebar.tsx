@@ -13,6 +13,8 @@ export function AdminSidebar() {
     const links = [
         { href: "/admin", label: "Dashboard", icon: "mdi:view-dashboard-outline" },
         { href: "/admin/draw-types", label: "Tirages", icon: "mdi:cards-outline" },
+        { href: "/admin/quizzes", label: "Quiz", icon: "mdi:puzzle-outline" },
+        { href: "/design-system", label: "Design System", icon: "mdi:palette-outline" },
     ];
 
     return (

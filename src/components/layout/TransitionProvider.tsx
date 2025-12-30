@@ -131,7 +131,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
     };
 
     return (
-        <div className="relative w-full min-h-screen bg-[var(--background-800)] overflow-x-hidden">
+        <div className="relative w-full h-[100dvh] bg-[var(--background-800)] overflow-hidden">
             <AnimatePresence mode="popLayout" custom={transitionTypeRef.current} initial={false}>
                 <motion.div
                     key={pathname}
@@ -140,15 +140,16 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="w-full min-h-screen bg-[var(--background-800)] shadow-2xl"
+                    className="w-full h-[100dvh] bg-[var(--background-800)] shadow-2xl pb-32 no-scrollbar"
                     style={{
-                        position: "absolute", // Nécessaire pour popLayout pour superposer les pages
+                        position: "absolute",
                         top: 0,
                         left: 0,
                         width: "100%",
-                        height: "100%",
-                        overflowY: "auto", // Chaque page gère son scroll
-                        overflowX: "hidden"
+                        overflowY: "scroll", // Force scroll behavior
+                        overflowX: "hidden",
+                        WebkitOverflowScrolling: "touch", // Smooth scroll iOS
+                        overscrollBehaviorY: "contain" // Prevent body scroll chain
                     }}
                 >
                     {children}

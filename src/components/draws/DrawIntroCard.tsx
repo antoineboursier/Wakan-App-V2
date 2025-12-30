@@ -23,9 +23,13 @@ interface DrawIntroCardProps {
     isMainPremium?: boolean;
     isSecondBtnPremium?: boolean;
     isLoading?: boolean;
+    // Limit display
     btnMainLimitCount?: number;
     btnMainLimitEnabled?: boolean;
     remainingDraws?: number;
+    premiumText?: string | null;
+    className?: string;
+    badge?: React.ReactNode;
 }
 
 export function DrawIntroCard({
@@ -47,6 +51,9 @@ export function DrawIntroCard({
     btnMainLimitCount = 1,
     btnMainLimitEnabled = false,
     remainingDraws = 0,
+    premiumText = "Tirages illimités actifs",
+    className,
+    badge,
 }: DrawIntroCardProps) {
     const isMainLocked = !isPremium && isMainPremium;
     const isMainDisabled = isMainLocked || (!isPremium && !canDrawFree);
@@ -54,7 +61,10 @@ export function DrawIntroCard({
     const isSecondLocked = !isPremium && isSecondBtnPremium;
 
     return (
-        <GlassCard id="draw-intro-card" className="w-full max-w-sm mx-auto p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-[var(--text-tertiary)] h-full">
+        <GlassCard id="draw-intro-card" className={`w-full max-w-sm mx-auto p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-[var(--text-tertiary)] h-full relative ${className || ''}`}>
+
+            {/* Badge (ex: Nouveau) */}
+            {badge}
 
             {/* Header Image + Gradient */}
             <div id="draw-intro-image" className="relative w-full h-[160px] shrink-0">
@@ -143,9 +153,9 @@ export function DrawIntroCard({
                                 </p>
                             )
                         )}
-                        {isPremium && (
+                        {isPremium && premiumText && (
                             <p className="para-lit text-[var(--accent-500)]">
-                                Tirages illimités actifs
+                                {premiumText}
                             </p>
                         )}
                     </div>

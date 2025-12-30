@@ -29,12 +29,10 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <body className={`${skranji.variable} ${leagueSpartan.variable} antialiased min-h-screen bg-[var(--background-900)] text-[var(--text-primary)] font-body`} suppressHydrationWarning>
+        <TransitionProvider>
+          {children}
+        </TransitionProvider>
         <Navigation />
-        <main className="pb-28 h-full min-h-screen relative overflow-x-hidden">
-          <TransitionProvider>
-            {children}
-          </TransitionProvider>
-        </main>
         <AdminBoLink />
       </body>
     </html>
