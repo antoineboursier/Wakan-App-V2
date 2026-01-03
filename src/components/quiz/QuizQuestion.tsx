@@ -69,7 +69,7 @@ export function QuizQuestion({ question, currentIndex, totalCount, quizTitle, qu
                             {/* Meta info & Progress */}
                             <div className="flex-1 flex flex-col justify-center space-y-2">
                                 <div>
-                                    <p className="para-lit font-medium" style={{ color: "var(--text-secondary)" }}>{quizTitle}</p>
+                                    <p className="para-lit font-medium pb-1" style={{ color: "var(--text-secondary)" }}>{quizTitle}</p>
                                     <p className="para-big uppercase tracking-wide font-bold" style={{ color: "var(--text-primary)" }}>
                                         QUESTION {currentIndex + 1} SUR {totalCount}
                                     </p>
@@ -90,16 +90,16 @@ export function QuizQuestion({ question, currentIndex, totalCount, quizTitle, qu
                         {/* Question Text */}
                         <div className="min-h-[80px] flex items-center justify-center py-2 w-full">
                             <AnimatePresence mode="wait">
-                                <motion.p
+                                <motion.h2
                                     key={question.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="para-lit pb-1 text-center w-full"
-                                    style={{ color: "var(--text-secondary)" }}
+                                    className="title-med text-center drop-shadow-sm w-full"
+                                    style={{ color: "var(--accent-900)" }}
                                 >
                                     {question.question_text}
-                                </motion.p>
+                                </motion.h2>
                             </AnimatePresence>
                         </div>
 
