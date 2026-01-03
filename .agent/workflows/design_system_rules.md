@@ -38,3 +38,9 @@ When tasked to add a UI element:
 
 ## 6. Specific Component Behavior
 - **Primary Buttons**: The icon color MUST match the text color (`text-current`).
+
+## 7. Visual Effects & Opacity
+**NEVER** apply arbitrary opacity (e.g., `opacity-50`, `text-white/60`) unless :
+- It is explicitly requested by the user.
+- It is part of a standard disabled state defined in the component.
+- Keep elements fully opaque by default for better readability and consistency.

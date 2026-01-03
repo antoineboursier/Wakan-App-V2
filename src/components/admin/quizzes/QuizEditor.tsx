@@ -22,10 +22,12 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
     // Form States
     const [formData, setFormData] = useState<QuizFormData>({
         title: quiz?.title || "",
+        short_title: quiz?.short_title || "",
         slug: quiz?.slug || "",
         description: quiz?.description || "",
         long_description: quiz?.long_description || "",
         is_active: quiz?.is_active || false,
+        result_display_type: quiz?.result_display_type || "single",
         image_url: quiz?.image_url || "",
         background_image_url: quiz?.background_image_url || "",
         is_premium: quiz?.is_premium || false,
@@ -38,10 +40,12 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
 
     const hasChanges = !quiz ? true : (
         formData.title !== quiz.title ||
+        formData.short_title !== (quiz.short_title || "") ||
         formData.slug !== quiz.slug ||
         formData.description !== (quiz.description || "") ||
         formData.long_description !== (quiz.long_description || "") ||
         formData.is_active !== quiz.is_active ||
+        formData.result_display_type !== (quiz.result_display_type || "single") ||
         formData.image_url !== (quiz.image_url || "") ||
         formData.background_image_url !== (quiz.background_image_url || "") ||
         formData.is_premium !== (quiz.is_premium || false) ||
@@ -206,12 +210,54 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
                         <div className="space-y-4 max-w-3xl">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1">Titre du Quiz</label>
-                                <input type="text" required className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white outline-none focus:border-blue-500 transition-colors" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white outline-none focus:border-blue-500 transition-colors"
+                                    value={formData.title}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            title: val,
+                                            slug: !isEditing ? val.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '') : prev.slug
+                                        }));
+                                    }}
+                                />
                             </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Slug (URL)</label>
-                                <input type="text" required className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white font-mono text-sm outline-none focus:border-blue-500 transition-colors" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} />
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Titre Raccourci (Résultat)</label>
+                                <input type="text" className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white outline-none focus:border-blue-500 transition-colors" value={formData.short_title || ""} onChange={(e) => setFormData({ ...formData, short_title: e.target.value })} placeholder='Ex: "Ta pierre du moment"' />
+                                <p className="text-xs text-slate-500 mt-1">Si vide, le titre principal sera utilisé.</p>
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Type d'affichage du Résultat</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.result_display_type === 'single' || !formData.result_display_type ? 'border-blue-500' : 'border-slate-500 group-hover:border-slate-400'}`}>
+                                            {(formData.result_display_type === 'single' || !formData.result_display_type) && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                                        </div>
+                                        <input type="radio" className="hidden" name="result_type" checked={formData.result_display_type === 'single' || !formData.result_display_type} onChange={() => setFormData({ ...formData, result_display_type: 'single' })} />
+                                        <span className={`text-sm ${formData.result_display_type === 'single' || !formData.result_display_type ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`}>Unique (1 seul profil)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.result_display_type === 'multiple' ? 'border-blue-500' : 'border-slate-500 group-hover:border-slate-400'}`}>
+                                            {formData.result_display_type === 'multiple' && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                                        </div>
+                                        <input type="radio" className="hidden" name="result_type" checked={formData.result_display_type === 'multiple'} onChange={() => setFormData({ ...formData, result_display_type: 'multiple' })} />
+                                        <span className={`text-sm ${formData.result_display_type === 'multiple' ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`}>Multiple (Plusieurs profils)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            {!isEditing && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Slug (URL)</label>
+                                    <input type="text" required className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white font-mono text-sm outline-none focus:border-blue-500 transition-colors" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} />
+                                    <p className="text-xs text-slate-500 mt-1">Généré automatiquement. Modifiable uniquement à la création.</p>
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1">Description courte (Liste)</label>
                                 <textarea rows={2} className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white outline-none focus:border-blue-500 transition-colors" value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Description affichée dans la liste des quiz..." />

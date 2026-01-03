@@ -116,11 +116,11 @@ export function QuizIntro({ quiz, questionCount, onStart, onClose }: QuizIntroPr
                         </div>
 
                         {/* CTA Button */}
-                        <div className="w-full pt-2">
+                        <div className="w-full pt-2 flex justify-center">
                             <Button
                                 onClick={onStart}
                                 variant="primary"
-                                className="w-full justify-center"
+                                className="justify-center"
                                 icon={<Icon icon="fa:arrow-right" className="text-current text-xl" />}
                             >
                                 Démarrer le quiz

@@ -6,6 +6,7 @@ import { Quiz, QuizQuestion, QuizProfile } from "@/types/quiz";
 import { calculateQuizResult } from "@/app/actions/quiz-public";
 import { QuizIntro } from "./QuizIntro";
 import { QuizQuestion as QuizQuestionScreen } from "./QuizQuestion";
+import { Loader } from "../ui/Loader";
 import { QuizResult } from "./QuizResult";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -124,7 +125,7 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
                             exit={{ opacity: 0 }}
                             className="flex flex-col items-center justify-center h-full space-y-4"
                         >
-                            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                            <Loader className="scale-125 mb-4" />
                             <p className="text-white/70 animate-pulse text-lg tracking-widest uppercase">Calcul de votre profil...</p>
                         </motion.div>
                     )}
@@ -133,6 +134,7 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
                         <QuizResult
                             key="res"
                             profile={result}
+                            resultSubtitle={quiz.short_title || quiz.title}
                             onExit={handleExit}
                         />
                     )}

@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  env: {
+    // Get latest commit hash and date during build time
+    NEXT_PUBLIC_APP_VERSION: require('child_process')
+      .execSync('git log -1 --format="%h - %cd" --date=short')
+      .toString()
+      .trim(),
+  },
 };
 
 export default nextConfig;

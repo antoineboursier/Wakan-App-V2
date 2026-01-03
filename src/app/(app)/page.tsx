@@ -60,8 +60,15 @@ export default function DashboardPage() {
       {/* --- HEADER (LOGO) --- */}
       <header className="relative w-full z-20 flex justify-center mt-16" id="dashboard-header">
         <h1 className="sr-only">Wakan - Tableau de bord</h1>
-        {/* Composant Logo Animé */}
-        <WakanLogo />
+        <div className="flex flex-col items-center">
+          {process.env.NEXT_PUBLIC_APP_VERSION && (
+            <span className="legend text-[var(--text-tertiary)] mb-4">
+              v.{process.env.NEXT_PUBLIC_APP_VERSION}
+            </span>
+          )}
+          {/* Composant Logo Animé */}
+          <WakanLogo />
+        </div>
       </header>
 
       {/* --- MAIN CONTENT --- */}

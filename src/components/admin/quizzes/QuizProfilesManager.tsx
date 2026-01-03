@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { QuizProfile, QuizProfileFormData } from "@/types/quiz";
 import { getQuizProfiles, createQuizProfile, updateQuizProfile, deleteQuizProfile } from "@/app/actions/quiz";
+import { uploadImage } from "@/app/admin/actions";
 import { AdminIcon } from "@/components/admin/AdminIcon";
 
 export function QuizProfilesManager({ quizId }: { quizId: string }) {
@@ -106,10 +107,56 @@ function ProfileForm({ quizId, profile, onClose, onSuccess }: { quizId: string, 
     const [formData, setFormData] = useState<QuizProfileFormData>({
         name: profile?.name || "",
         description_result: profile?.description_result || "",
+        image_url: profile?.image_url || "",
         is_active: true, // Toujours actif
         order: profile?.order || 10
     });
     const [saving, setSaving] = useState(false);
+
+    const compressToWebP = async (file: File): Promise<File> => {
+        if (file.type === 'image/svg+xml') return file;
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) { resolve(file); return; }
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob((blob) => {
+                    if (!blob) { resolve(file); return; }
+                    const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: "image/webp" });
+                    resolve(newFile);
+                }, "image/webp", 0.85);
+            };
+            img.onerror = () => resolve(file);
+        });
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const compressed = await compressToWebP(file);
+            const fd = new FormData();
+            fd.append('file', compressed);
+            const url = await uploadImage(fd);
+            setFormData(prev => ({ ...prev, image_url: url }));
+        } catch (err: any) {
+            alert("Erreur upload: " + err.message);
+        }
+    };
+
+    const hasChanges = !profile ? (
+        formData.name !== "" || formData.description_result !== "" || formData.image_url !== ""
+    ) : (
+        formData.name !== profile.name ||
+        (formData.description_result || "") !== (profile.description_result || "") ||
+        (formData.image_url || "") !== (profile.image_url || "") ||
+        formData.order !== profile.order
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -137,6 +184,28 @@ function ProfileForm({ quizId, profile, onClose, onSuccess }: { quizId: string, 
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
+                    {/* Image Upload */}
+                    <div className="flex gap-4 items-start">
+                        <div className="w-24 h-24 bg-slate-900 border border-slate-600 rounded-lg overflow-hidden flex items-center justify-center relative group shrink-0">
+                            {formData.image_url ? (
+                                <img src={formData.image_url} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <AdminIcon icon="mdi:account" className="text-slate-600 w-8 h-8" />
+                            )}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <label className="cursor-pointer p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-white">
+                                    <AdminIcon icon="mdi:upload" width="20" />
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                </label>
+                            </div>
+                        </div>
+                        <div className="flex-1 space-y-2 pt-2">
+                            <label className="block text-xs uppercase font-bold text-slate-500">Image du Profil</label>
+                            <input type="text" placeholder="URL de l'image" className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white outline-none" value={formData.image_url || ''} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} />
+                            <p className="text-xs text-slate-500">Image carrée recommandée (affichée dans le résultat).</p>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-4 gap-4">
                         <div className="col-span-3">
                             <label className="block text-xs uppercase font-bold text-slate-500 mb-1">Nom du Profil</label>
@@ -175,8 +244,11 @@ function ProfileForm({ quizId, profile, onClose, onSuccess }: { quizId: string, 
                         <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors font-medium">Annuler</button>
                         <button
                             type="submit"
-                            disabled={saving}
-                            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-md text-sm font-bold shadow-lg shadow-blue-900/20 transition-all transform active:scale-95 disabled:opacity-70 disabled:scale-100 flex items-center gap-2"
+                            disabled={saving || !hasChanges}
+                            className={`px-6 py-2 rounded-md text-sm font-bold shadow-lg transition-all transform flex items-center gap-2 ${saving || !hasChanges
+                                    ? "bg-slate-700 text-slate-400 cursor-not-allowed shadow-none scale-100"
+                                    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 active:scale-95"
+                                }`}
                         >
                             {saving && <AdminIcon icon="eos-icons:loading" className="animate-spin" />}
                             {saving ? "Enregistrement..." : "Enregistrer"}

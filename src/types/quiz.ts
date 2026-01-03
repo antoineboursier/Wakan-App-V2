@@ -2,10 +2,12 @@ export interface Quiz {
     id: string;
     slug: string;
     title: string;
+    short_title?: string | null;
     description?: string | null;
     long_description?: string | null;
     is_active: boolean;
     type: 'personality';
+    result_display_type?: 'single' | 'multiple';
     // New fields
     image_url?: string | null;
     background_image_url?: string | null;
@@ -68,9 +70,11 @@ export interface QuizAnswerInfluence {
 export type QuizFormData = {
     slug: string;
     title: string;
+    short_title?: string;
     description?: string;
     long_description?: string;
     is_active: boolean;
+    result_display_type?: 'single' | 'multiple';
     image_url?: string;
     background_image_url?: string;
     is_premium?: boolean;
@@ -84,6 +88,7 @@ export type QuizFormData = {
 export type QuizProfileFormData = {
     name: string;
     description_result?: string;
+    image_url?: string;
     is_active: boolean;
     order: number;
 };

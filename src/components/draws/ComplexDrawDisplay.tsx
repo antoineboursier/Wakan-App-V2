@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { Button } from "../ui/Button";
 import { Separator } from "../ui/Separator";
+import { Loader } from "../ui/Loader";
 
 interface ComplexDrawItem {
     id: string;
@@ -312,7 +313,7 @@ export function ComplexDrawDisplay({
                                 disabled={isSecondLocked || isLoadingComplex}
                                 icon={
                                     isLoadingComplex ? (
-                                        <Icon icon="eos-icons:loading" width={20} className="animate-spin" />
+                                        <Loader className="h-5 w-auto" />
                                     ) : isSecondLocked ? (
                                         <Icon icon="mingcute:lock-fill" width={16} height={16} />
                                     ) : btnSecondIcon ? (
