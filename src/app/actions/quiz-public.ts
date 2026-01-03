@@ -73,10 +73,23 @@ export async function getPublicQuizBySlug(slug: string): Promise<{ quiz: Quiz, q
 /**
  * BOÎTE NOIRE : Calcule le résultat basé sur les réponses
  */
-export async function calculateQuizResult(quizId: string, answerIds: string[]): Promise<QuizProfile | null> {
+/**
+ * BOÎTE NOIRE : Calcule le résultat basé sur les réponses
+ * Retourne le profil principal et les profils secondaires (si activé)
+ */
+export async function calculateQuizResult(quizId: string, answerIds: string[]): Promise<{ primary: QuizProfile & { score: number, percentage: number }, secondary: (QuizProfile & { score: number, percentage: number })[] } | null> {
     if (!answerIds.length) return null;
 
-    // 1. Récupérer toutes les influences liées aux réponses choisies
+    // 1. Get Quiz Config (for multiple display check)
+    const { data: quiz, error: quizError } = await supabaseAdmin
+        .from('quizzes')
+        .select('result_display_type')
+        .eq('id', quizId)
+        .single();
+
+    if (quizError) return null;
+
+    // 2. Récupérer toutes les influences liées aux réponses choisies
     const { data: influences, error } = await supabaseAdmin
         .from('quiz_answer_influences')
         .select('profile_id, weight')
@@ -87,40 +100,70 @@ export async function calculateQuizResult(quizId: string, answerIds: string[]): 
         throw new Error("Impossible de calculer le résultat");
     }
 
-    // 2. Calculer le score par profil
+    // 3. Calculer le score par profil
     const scores: Record<string, number> = {};
     influences.forEach(inf => {
         scores[inf.profile_id] = (scores[inf.profile_id] || 0) + inf.weight;
     });
 
-    // 3. Trouver le profil avec le score max
-    // En cas d'égalité, on devrait idéalement utiliser l'ordre des profils, 
-    // mais pour l'instant on prend le premier trouvé ou on pourrait fetcher les profils pour trier par 'order'.
-
+    // 4. Determiner Max Score et Candidats
     let maxScore = -Infinity;
-    let winningProfileIds: string[] = [];
+    for (const s of Object.values(scores)) {
+        if (s > maxScore) maxScore = s;
+    }
+
+    if (maxScore === -Infinity) return null;
+
+    const primaryCandidates: string[] = [];
+    const secondaryCandidates: string[] = [];
+
+    const threshold = maxScore * 0.7;
+    const isMultiple = quiz.result_display_type === 'multiple';
 
     for (const [pid, score] of Object.entries(scores)) {
-        if (score > maxScore) {
-            maxScore = score;
-            winningProfileIds = [pid];
-        } else if (score === maxScore) {
-            winningProfileIds.push(pid);
+        if (score === maxScore) {
+            primaryCandidates.push(pid);
+        } else if (isMultiple && score >= threshold) {
+            secondaryCandidates.push(pid);
         }
     }
 
-    if (winningProfileIds.length === 0) return null;
+    // 5. Fetch details
+    const allIds = [...primaryCandidates, ...secondaryCandidates];
 
-    // 4. Récupérer le profil gagnant (avec gestion égalité via 'order')
-    const { data: winningProfile, error: profileError } = await supabaseAdmin
+    const { data: profiles, error: profileError } = await supabaseAdmin
         .from('quiz_profiles')
         .select('*')
-        .in('id', winningProfileIds)
-        .order('order', { ascending: true }) // Le plus petit 'order' gagne en cas d'égalité (priorité arbitraire définie par l'admin)
-        .limit(1)
-        .single();
+        .in('id', allIds)
+        .order('order', { ascending: true });
 
-    if (profileError) return null;
+    if (profileError || !profiles || profiles.length === 0) return null;
 
-    return winningProfile;
+    // 6. Select Primary (Tie-break via order)
+    const primaryProfileBase = profiles.find(p => primaryCandidates.includes(p.id));
+    if (!primaryProfileBase) return null;
+
+    const primaryProfile = {
+        ...primaryProfileBase,
+        score: scores[primaryProfileBase.id],
+        percentage: 100 // Winner is always reference 100%
+    };
+
+    // 7. Select Secondary (sorted by score desc)
+    let secondaryProfiles: (QuizProfile & { score: number, percentage: number })[] = [];
+    if (isMultiple) {
+        secondaryProfiles = profiles
+            .filter(p => p.id !== primaryProfile.id)
+            .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
+            .map(p => ({
+                ...p,
+                score: scores[p.id],
+                percentage: maxScore > 0 ? Math.round((scores[p.id] / maxScore) * 100) : 0 // Relative to winner
+            }));
+    }
+
+    return {
+        primary: primaryProfile,
+        secondary: secondaryProfiles
+    };
 }

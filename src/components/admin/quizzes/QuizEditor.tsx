@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Quiz, QuizFormData } from "@/types/quiz";
-import { createQuiz, updateQuiz, deleteQuiz } from "@/app/actions/quiz";
+import { createQuiz, updateQuiz, deleteQuiz, exportQuizJSON, overwriteQuizWithImport } from "@/app/actions/quiz";
 import { uploadImage } from "@/app/admin/actions";
 import { QuizProfilesManager } from "@/components/admin/quizzes/QuizProfilesManager";
 import { QuizQuestionsManager } from "@/components/admin/quizzes/QuizQuestionsManager";
@@ -18,6 +18,7 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
     const isEditing = !!quiz;
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'config' | 'profiles' | 'questions'>('config');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form States
     const [formData, setFormData] = useState<QuizFormData>({
@@ -61,19 +62,13 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
         setLoading(true);
         try {
             if (isEditing && quiz) {
-                // Apply default created_at if published_at is empty/null, or keep it if explicitly set
-                // Actually, if it's null, we might want to leave it null or set it.
-                // Request says: "par défaut, c'est la date de création. Mais c'est une donnée modifiable."
-                // Currently if null, front logic might use createdAll. Backend storage should probably just store what's given.
                 await updateQuiz(quiz.id, formData);
                 router.refresh();
                 alert("Modifications enregistrées");
             } else {
-                // On creation, we can set published_at to now or created_at default
-                // Let's set it to null initially, and rely on logic
                 const newQuiz = await createQuiz({
                     ...formData,
-                    published_at: formData.published_at || new Date().toISOString() // Default to now for new quizzes if not set
+                    published_at: formData.published_at || new Date().toISOString()
                 });
                 router.push(`/admin/quizzes/${newQuiz.id}`);
             }
@@ -136,6 +131,52 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
         }
     };
 
+    const handleExport = async () => {
+        if (!quiz) return;
+        try {
+            const data = await exportQuizJSON(quiz.id);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `quiz-${quiz.slug}-export.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e: any) { alert("Erreur export: " + e.message); }
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !quiz) return;
+
+        if (!confirm("ATTENTION : Cela va ÉCRASER tout le contenu actuel de ce quiz (Profils, Questions, etc.) avec le contenu du fichier. Êtes-vous sûr ?")) {
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            await overwriteQuizWithImport(quiz.id, json);
+            alert("Quiz mis à jour avec succès !");
+            window.location.reload();
+        } catch (error: any) {
+            console.error(error);
+            alert("Erreur lors de l'import: " + error.message);
+            setLoading(false);
+        } finally {
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+
     const ToggleActive = () => (
         <button
             type="button"
@@ -153,6 +194,15 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
 
     return (
         <div className="space-y-6">
+            {/* Hidden Input for Import */}
+            <input
+                type="file"
+                accept=".json"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileImport}
+            />
+
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-700">
                 <div className="flex items-center gap-4">
@@ -179,6 +229,24 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
                 </div>
 
                 <div className="flex items-center gap-6">
+                    {isEditing && (
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleImportClick}
+                                className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded"
+                                title="Importer (Écraser)"
+                            >
+                                <AdminIcon icon="mdi:upload" width="24" />
+                            </button>
+                            <button
+                                onClick={handleExport}
+                                className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded"
+                                title="Exporter JSON"
+                            >
+                                <AdminIcon icon="mdi:download" width="24" />
+                            </button>
+                        </div>
+                    )}
                     <ToggleActive />
                     <button
                         onClick={() => handleSubmit()}

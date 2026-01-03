@@ -69,7 +69,6 @@ export function QuizProfilesManager({ quizId }: { quizId: string }) {
                             <div className="mb-4">
                                 <div className="flex justify-between items-start mb-2">
                                     <h4 className="font-bold text-white flex items-center gap-2 truncate pr-2">
-                                        <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 border border-slate-700">{profile.order}</span>
                                         {profile.name}
                                     </h4>
                                 </div>
@@ -207,7 +206,7 @@ function ProfileForm({ quizId, profile, onClose, onSuccess }: { quizId: string, 
                     </div>
 
                     <div className="grid grid-cols-4 gap-4">
-                        <div className="col-span-3">
+                        <div className="col-span-4">
                             <label className="block text-xs uppercase font-bold text-slate-500 mb-1">Nom du Profil</label>
                             <input
                                 required
@@ -216,15 +215,6 @@ function ProfileForm({ quizId, profile, onClose, onSuccess }: { quizId: string, 
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 placeholder="ex: Le Sage"
-                            />
-                        </div>
-                        <div className="col-span-1">
-                            <label className="block text-xs uppercase font-bold text-slate-500 mb-1">N°</label>
-                            <input
-                                type="number"
-                                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
-                                value={formData.order}
-                                onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) })}
                             />
                         </div>
                     </div>
@@ -246,8 +236,8 @@ function ProfileForm({ quizId, profile, onClose, onSuccess }: { quizId: string, 
                             type="submit"
                             disabled={saving || !hasChanges}
                             className={`px-6 py-2 rounded-md text-sm font-bold shadow-lg transition-all transform flex items-center gap-2 ${saving || !hasChanges
-                                    ? "bg-slate-700 text-slate-400 cursor-not-allowed shadow-none scale-100"
-                                    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 active:scale-95"
+                                ? "bg-slate-700 text-slate-400 cursor-not-allowed shadow-none scale-100"
+                                : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20 active:scale-95"
                                 }`}
                         >
                             {saving && <AdminIcon icon="eos-icons:loading" className="animate-spin" />}

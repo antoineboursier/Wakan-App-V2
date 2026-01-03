@@ -1,6 +1,7 @@
 import { getQuizzes } from "@/app/actions/quiz";
 import Link from "next/link";
 import { AdminIcon } from "@/components/admin/AdminIcon";
+import { ImportQuizButton } from "@/components/admin/quizzes/ImportQuizButton";
 
 export default async function QuizzesListPage() {
     const quizzes = await getQuizzes();
@@ -9,13 +10,16 @@ export default async function QuizzesListPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-white">Quiz de Personnalité</h1>
-                <Link
-                    href="/admin/quizzes/new"
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                    <AdminIcon icon="mdi:plus" className="w-4 h-4" />
-                    Nouveau Quiz
-                </Link>
+                <div className="flex gap-3">
+                    <ImportQuizButton />
+                    <Link
+                        href="/admin/quizzes/new"
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                        <AdminIcon icon="mdi:plus" className="w-4 h-4" />
+                        Nouveau Quiz
+                    </Link>
+                </div>
             </div>
 
             <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">

@@ -75,9 +75,9 @@ export function QuizQuestion({ question, currentIndex, totalCount, quizTitle, qu
                                     </p>
                                 </div>
                                 {/* Progress Bar */}
-                                <div className="w-full h-1.5 rounded-[8px] overflow-hidden" style={{ background: "var(--background-700)" }}>
+                                <div className="w-full h-[4px] rounded-[8px] overflow-hidden" style={{ background: "var(--background-700)" }}>
                                     <motion.div
-                                        className="h-full rounded-[8px]"
+                                        className="h-full rounded-[8px] shadow-[0_0_8px_var(--accent-500)]"
                                         style={{ background: "var(--accent-900)" }}
                                         initial={{ width: `${((currentIndex) / totalCount) * 100}%` }}
                                         animate={{ width: `${progress}%` }}
@@ -90,16 +90,16 @@ export function QuizQuestion({ question, currentIndex, totalCount, quizTitle, qu
                         {/* Question Text */}
                         <div className="min-h-[80px] flex items-center justify-center py-2 w-full">
                             <AnimatePresence mode="wait">
-                                <motion.h2
+                                <motion.p
                                     key={question.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="title-lit text-center drop-shadow-sm w-full"
-                                    style={{ color: "var(--accent-900)" }}
+                                    className="para-lit pb-1 text-center w-full"
+                                    style={{ color: "var(--text-secondary)" }}
                                 >
                                     {question.question_text}
-                                </motion.h2>
+                                </motion.p>
                             </AnimatePresence>
                         </div>
 

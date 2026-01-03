@@ -8,12 +8,38 @@ import {
 } from "@/app/actions/quiz";
 import { AdminIcon } from "@/components/admin/AdminIcon";
 
+// DND Kit
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 export function QuizQuestionsManager({ quizId }: { quizId: string }) {
     const [questions, setQuestions] = useState<QuizQuestion[]>([]);
     const [profiles, setProfiles] = useState<QuizProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -22,7 +48,8 @@ export function QuizQuestionsManager({ quizId }: { quizId: string }) {
                 getQuizQuestions(quizId),
                 getQuizProfiles(quizId)
             ]);
-            setQuestions(qs);
+            // Ensure sorting by order locally
+            setQuestions(qs.sort((a, b) => a.order - b.order));
             setProfiles(ps);
         } catch (error) {
             console.error(error);
@@ -46,11 +73,38 @@ export function QuizQuestionsManager({ quizId }: { quizId: string }) {
         }
     };
 
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = questions.findIndex((item) => item.id === active.id);
+            const newIndex = questions.findIndex((item) => item.id === over.id);
+
+            const newItems = arrayMove(questions, oldIndex, newIndex);
+
+            // 1. Optimistic UI Update
+            setQuestions(newItems);
+
+            // 2. Batch Update to DB
+            const updates = newItems.map((item, index) => ({
+                id: item.id,
+                order: (index + 1) * 10
+            }));
+
+            try {
+                await Promise.all(updates.map(u => updateQuizQuestion(u.id, { order: u.order })));
+            } catch (err) {
+                console.error("Failed to reorder - reverting", err);
+                loadData();
+            }
+        }
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in">
             <div className="flex justify-between items-center">
                 <div className="text-sm text-slate-400">
-                    Définissez les questions ({questions.length}) et les influences de chaque réponse.
+                    Définissez les questions ({questions.length}) et les influences de chaque réponse. Glissez-déposez pour réorganiser.
                 </div>
                 <button
                     onClick={() => setIsCreating(true)}
@@ -71,23 +125,25 @@ export function QuizQuestionsManager({ quizId }: { quizId: string }) {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {questions.map((q) => (
-                        <div key={q.id} className="bg-slate-900 border border-slate-700 p-4 rounded-lg flex items-center justify-between group hover:border-slate-500 transition-colors">
-                            <div className="flex items-center gap-4 overflow-hidden">
-                                <span className="flex-shrink-0 w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-sm font-bold border border-slate-700 text-slate-400">{q.order}</span>
-                                <div className="truncate">
-                                    <h4 className="font-medium text-white truncate max-w-md">{q.question_text}</h4>
-                                    <div className="text-xs text-slate-500 flex gap-3 mt-0.5">
-                                        <span className="flex items-center gap-1"><AdminIcon icon="mdi:format-list-bulleted" width="12" /> {q.answers?.length || 0} Réponses</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => setEditingQuestion(q)} className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded transition-colors"><AdminIcon icon="mdi:pencil" width="18" /></button>
-                                <button onClick={() => handleDelete(q.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition-colors"><AdminIcon icon="mdi:trash-can" width="18" /></button>
-                            </div>
-                        </div>
-                    ))}
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={questions}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {questions.map((q) => (
+                                <SortableQuestionItem
+                                    key={q.id}
+                                    question={q}
+                                    onEdit={() => setEditingQuestion(q)}
+                                    onDelete={() => handleDelete(q.id)}
+                                />
+                            ))}
+                        </SortableContext>
+                    </DndContext>
                 </div>
             )}
 
@@ -100,6 +156,53 @@ export function QuizQuestionsManager({ quizId }: { quizId: string }) {
                     onSuccess={() => { setIsCreating(false); setEditingQuestion(null); loadData(); }}
                 />
             )}
+        </div>
+    );
+}
+
+function SortableQuestionItem({ question, onEdit, onDelete }: { question: QuizQuestion, onEdit: () => void, onDelete: () => void }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: question.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 1,
+        opacity: isDragging ? 0.5 : 1
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            className="bg-slate-900 border border-slate-700 p-4 rounded-lg flex items-center justify-between group hover:border-slate-500 transition-colors relative"
+        >
+            <div className="flex items-center gap-4 overflow-hidden flex-1">
+                {/* Drag Handle */}
+                <div {...listeners} className="cursor-grab text-slate-600 hover:text-white p-2 -ml-2">
+                    <AdminIcon icon="mdi:drag" width="20" />
+                </div>
+
+                {/* Order removed from display as requested */}
+
+                <div className="truncate flex-1">
+                    <h4 className="font-medium text-white truncate max-w-md">{question.question_text}</h4>
+                    <div className="text-xs text-slate-500 flex gap-3 mt-0.5">
+                        <span className="flex items-center gap-1"><AdminIcon icon="mdi:format-list-bulleted" width="12" /> {question.answers?.length || 0} Réponses</span>
+                    </div>
+                </div>
+            </div>
+            <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity pl-4 border-l border-slate-800">
+                <button onClick={onEdit} className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded transition-colors"><AdminIcon icon="mdi:pencil" width="18" /></button>
+                <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition-colors"><AdminIcon icon="mdi:trash-can" width="18" /></button>
+            </div>
         </div>
     );
 }
@@ -320,8 +423,8 @@ function AnswerRow({ answer, profiles, onDelete }: { answer: QuizAnswer, profile
                     <input
                         type="number"
                         className={`w-12 text-center rounded p-1 outline-none border border-slate-700 focus:border-blue-500 transition-colors ${(influences[p.id] || 0) > 0 ? 'bg-blue-900/20 text-blue-400 font-bold' :
-                                (influences[p.id] || 0) < 0 ? 'bg-red-900/20 text-red-400 font-bold' :
-                                    'bg-slate-800/50 text-slate-500'
+                            (influences[p.id] || 0) < 0 ? 'bg-red-900/20 text-red-400 font-bold' :
+                                'bg-slate-800/50 text-slate-500'
                             }`}
                         value={influences[p.id] || 0}
                         onChange={e => handleWeightChange(p.id, e.target.value)}

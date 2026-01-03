@@ -38,6 +38,11 @@ const NAV_ITEMS = [
 export function Navigation() {
     const pathname = usePathname();
 
+    // Hide navigation on sub-pages (e.g. /quiz/slug, /tirages/id) to provide "immersive mode"
+    // Only show on exact matches of nav items
+    const isMainPage = NAV_ITEMS.some(item => pathname === item.href);
+    if (!isMainPage) return null;
+
     return (
         // Conteneur global fixe en bas (positionne la barre mais laisse passer les clics autour)
         <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-2 pointer-events-none">

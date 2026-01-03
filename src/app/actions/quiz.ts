@@ -228,3 +228,168 @@ export async function upsertAnswerInfluence(answerId: string, profileId: string,
 
     if (error) throw new Error(error.message);
 }
+
+// --- Import / Export ---
+
+export async function exportQuizJSON(quizId: string): Promise<any> {
+    const quiz = await getQuizById(quizId);
+    if (!quiz) throw new Error("Quiz non trouvé");
+
+    const profiles = await getQuizProfiles(quizId);
+    const questions = await getQuizQuestions(quizId);
+
+    return {
+        quiz,
+        profiles,
+        questions
+    };
+}
+
+export async function importQuizJSON(data: any): Promise<void> {
+    try {
+        // 1. Create Quiz
+        const quizData: QuizFormData = {
+            title: (data.quiz.title || "Untitled") + " (Import)",
+            description: data.quiz.description,
+            slug: (data.quiz.slug || "quiz") + "-import-" + Date.now(),
+            image_url: data.quiz.image_url,
+            background_image_url: data.quiz.background_image_url,
+            is_active: false,
+            short_title: data.quiz.short_title,
+            result_display_type: data.quiz.result_display_type || 'single'
+        };
+
+        const newQuiz = await createQuiz(quizData);
+        const newQuizId = newQuiz.id;
+
+        // 2. Create Profiles & Map IDs
+        const profileIdMap = new Map<string, string>(); // Old -> New
+
+        if (data.profiles && Array.isArray(data.profiles)) {
+            for (const p of data.profiles) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id, quiz_id, created_at, updated_at, ...pData } = p;
+                const newProfile = await createQuizProfile(newQuizId, pData);
+                profileIdMap.set(p.id, newProfile.id);
+            }
+        }
+
+        // 3. Create Questions hierarchy
+        if (data.questions && Array.isArray(data.questions)) {
+            for (const q of data.questions) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id, quiz_id, created_at, updated_at, answers, ...qData } = q;
+                const newQuestion = await createQuizQuestion(newQuizId, qData);
+
+                if (answers && Array.isArray(answers)) {
+                    for (const a of answers) {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const { id: oldAId, question_id, created_at: ca, updated_at: ua, influences, ...aData } = a;
+                        const newAnswer = await createQuizAnswer(newQuestion.id, aData);
+
+                        if (influences && Array.isArray(influences)) {
+                            for (const inf of influences) {
+                                // Find new profile ID
+                                const newProfileId = profileIdMap.get(inf.profile_id);
+                                if (newProfileId) {
+                                    await upsertAnswerInfluence(newAnswer.id, newProfileId, inf.weight);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        revalidatePath('/admin/quizzes');
+    } catch (e: any) {
+        console.error("Import failed:", e);
+        throw new Error("L'import a échoué: " + e.message);
+    }
+}
+
+export async function overwriteQuizWithImport(targetQuizId: string, data: any): Promise<void> {
+    try {
+        // 1. Update Main Quiz Data (Optional: keep or overwrite? Overwrite is usually expected on import)
+        // We keep the ID and Slug stable usually, or we can update title/desc.
+        const quizUpdate: Partial<QuizFormData> = {
+            title: data.quiz.title,
+            description: data.quiz.description,
+            long_description: data.quiz.long_description,
+            image_url: data.quiz.image_url,
+            background_image_url: data.quiz.background_image_url,
+            is_active: false, // Reset to draft for safety
+            short_title: data.quiz.short_title,
+            result_display_type: data.quiz.result_display_type || 'single',
+            limit_enabled: data.quiz.limit_enabled,
+            limit_count: data.quiz.limit_count,
+            btn_label: data.quiz.btn_label,
+            btn_icon: data.quiz.btn_icon,
+            is_premium: data.quiz.is_premium
+        };
+        await updateQuiz(targetQuizId, quizUpdate);
+
+        // 2. Clear Existing Content (Profiles & Questions)
+        // Deleting profiles cascades to questions usually? No, questions are separate but answers depend on profiles for influences?
+        // Influences reference profile_id. If we delete profiles, influences die.
+        // Let's delete manually to be clean.
+        // Constraints: key constraints.
+        // If we delete profiles first, answer_influences might block or cascade delete.
+        // If we Delete Questions first -> Answers die -> Influences die.
+        // Then Delete Profiles.
+
+        // Fetch current questions to delete
+        const currentQuestions = await getQuizQuestions(targetQuizId);
+        for (const q of currentQuestions) {
+            await deleteQuizQuestion(q.id);
+        }
+
+        const currentProfiles = await getQuizProfiles(targetQuizId);
+        for (const p of currentProfiles) {
+            await deleteQuizProfile(p.id);
+        }
+
+        // 3. Re-create Profiles & Map IDs
+        const profileIdMap = new Map<string, string>(); // Old JSON ID -> New DB ID
+
+        if (data.profiles && Array.isArray(data.profiles)) {
+            for (const p of data.profiles) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id, quiz_id, created_at, updated_at, ...pData } = p;
+                const newProfile = await createQuizProfile(targetQuizId, pData);
+                profileIdMap.set(p.id, newProfile.id);
+            }
+        }
+
+        // 4. Re-create Questions
+        if (data.questions && Array.isArray(data.questions)) {
+            for (const q of data.questions) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id, quiz_id, created_at, updated_at, answers, ...qData } = q;
+                const newQuestion = await createQuizQuestion(targetQuizId, qData);
+
+                if (answers && Array.isArray(answers)) {
+                    for (const a of answers) {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const { id: oldAId, question_id, created_at: ca, updated_at: ua, influences, ...aData } = a;
+                        const newAnswer = await createQuizAnswer(newQuestion.id, aData);
+
+                        if (influences && Array.isArray(influences)) {
+                            for (const inf of influences) {
+                                const newProfileId = profileIdMap.get(inf.profile_id);
+                                if (newProfileId) {
+                                    await upsertAnswerInfluence(newAnswer.id, newProfileId, inf.weight);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        revalidatePath(`/admin/quizzes/${targetQuizId}`);
+        revalidatePath('/admin/quizzes');
+    } catch (e: any) {
+        throw new Error("L'import a échoué: " + e.message);
+    }
+}

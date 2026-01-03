@@ -24,7 +24,7 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
     const [step, setStep] = useState<StepState>('intro');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({}); // questionId -> answerId
-    const [result, setResult] = useState<QuizProfile | null>(null);
+    const [result, setResult] = useState<any | null>(null);
 
     // Helpers
     const currentQuestion = questions[currentQuestionIndex];
@@ -54,8 +54,8 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
             try {
                 // Extract answer IDs array
                 const answerIds = Object.values(newAnswers);
-                const calculatedProfile = await calculateQuizResult(quiz.id, answerIds);
-                setResult(calculatedProfile);
+                const calculatedResult = await calculateQuizResult(quiz.id, answerIds);
+                setResult(calculatedResult);
                 setStep('result');
             } catch (e) {
                 console.error(e);
@@ -133,7 +133,8 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
                     {step === 'result' && result && (
                         <QuizResult
                             key="res"
-                            profile={result}
+                            profile={result.primary}
+                            secondaryProfiles={result.secondary}
                             resultSubtitle={quiz.short_title || quiz.title}
                             onExit={handleExit}
                         />
