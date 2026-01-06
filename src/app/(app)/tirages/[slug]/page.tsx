@@ -128,6 +128,7 @@ export default async function DrawPage({
                                 }))}
                                 distractorImages={distractorImages}
                                 shouldAnimate={animate === 'true'}
+                                slug={slug}
                             />
                         ) : (
                             // Simple Draw Display - Single item

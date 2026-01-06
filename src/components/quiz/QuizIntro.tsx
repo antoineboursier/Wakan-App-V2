@@ -1,19 +1,22 @@
 "use client";
 
-import { Quiz } from "@/types/quiz";
+import { Quiz, QuizProfile } from "@/types/quiz";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { BackButton } from "../ui/BackButton";
 import { Button } from "../ui/Button";
+import { QuizResultSummary } from "./QuizResultSummary";
 
 interface QuizIntroProps {
     quiz: Quiz;
     questionCount: number;
     onStart: () => void;
     onClose: () => void;
+    lastResult?: QuizProfile;
+    onOpenResult?: () => void;
 }
 
-export function QuizIntro({ quiz, questionCount, onStart, onClose }: QuizIntroProps) {
+export function QuizIntro({ quiz, questionCount, onStart, onClose, lastResult, onOpenResult }: QuizIntroProps) {
     const description = quiz.long_description || quiz.description;
 
     return (
@@ -36,7 +39,7 @@ export function QuizIntro({ quiz, questionCount, onStart, onClose }: QuizIntroPr
                     <div
                         className="w-full max-w-md mx-auto flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-500"
                         style={{
-                            borderRadius: "var(--sizes-s, 8px)",
+                            borderRadius: lastResult ? "8px 8px 0 0" : "var(--sizes-s, 8px)",
                             background: "linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)",
                             display: "flex",
                             padding: "var(--sizes-l, 24px)",
@@ -123,10 +126,19 @@ export function QuizIntro({ quiz, questionCount, onStart, onClose }: QuizIntroPr
                                 className="justify-center"
                                 icon={<Icon icon="fa:arrow-right" className="text-current text-xl" />}
                             >
-                                Démarrer le quiz
+                                {lastResult ? "Recommencer le quiz" : "Démarrer le quiz"}
                             </Button>
                         </div>
                     </div>
+
+                    {/* Result Summary (Attached Below) */}
+                    {lastResult && onOpenResult && (
+                        <QuizResultSummary
+                            profile={lastResult}
+                            quizTitle={quiz.short_title || quiz.title}
+                            onClick={onOpenResult}
+                        />
+                    )}
                 </div>
             </div>
         </motion.div>

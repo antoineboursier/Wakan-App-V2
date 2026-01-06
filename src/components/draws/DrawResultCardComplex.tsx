@@ -22,7 +22,7 @@ export function DrawResultCardComplex({ items, globalDescription, onReset }: Dra
 
     return (
         <GlassCard
-            className="w-full max-w-sm mx-auto p-6 flex flex-col gap-4 relative overflow-hidden text-left border-none"
+            className="w-full max-w-sm mx-auto p-6 flex flex-col gap-4 relative overflow-hidden text-left border border-white-mix"
             style={{
                 background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
                 backdropFilter: 'blur(4px)',

@@ -61,7 +61,7 @@ export function DrawIntroCard({
     const isSecondLocked = !isPremium && isSecondBtnPremium;
 
     return (
-        <GlassCard id="draw-intro-card" className={`w-full max-w-sm mx-auto p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-[var(--text-tertiary)] h-full relative ${className || ''}`}>
+        <GlassCard id="draw-intro-card" className={`w-full p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-white-mix h-full relative ${className || ''}`}>
 
             {/* Badge (ex: Nouveau) */}
             {badge}

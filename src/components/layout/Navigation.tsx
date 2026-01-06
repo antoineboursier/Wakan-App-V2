@@ -25,7 +25,7 @@ const NAV_ITEMS = [
     },
     {
         name: "Mes astres",
-        href: "/profil",
+        href: "/mes-astres",
         icon: "solar:star-bold-duotone"
     },
     {

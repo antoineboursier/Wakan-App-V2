@@ -7,9 +7,10 @@ interface ShareButtonProps {
     text: string;
     url?: string;
     className?: string;
+    variant?: 'default' | 'icon';
 }
 
-export function ShareButton({ title, text, url, className = "" }: ShareButtonProps) {
+export function ShareButton({ title, text, url, className = "", variant = 'default' }: ShareButtonProps) {
     const handleShare = async () => {
         const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
 
@@ -45,7 +46,7 @@ export function ShareButton({ title, text, url, className = "" }: ShareButtonPro
             aria-label="Partager"
         >
             <Icon icon="solar:share-bold" width="20" />
-            <span className="para-lit pt-[4px]">Partager</span>
+            {variant === 'default' && <span className="para-lit pt-[4px]">Partager</span>}
         </button>
     );
 }

@@ -12,9 +12,11 @@ interface QuizResultProps {
     secondaryProfiles?: (QuizProfile & { score?: number; percentage?: number })[];
     resultSubtitle: string;
     onExit: () => void;
+    onBack?: () => void;
+    hideExitButton?: boolean;
 }
 
-export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit }: QuizResultProps) {
+export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit, onBack, hideExitButton = false }: QuizResultProps) {
     const hasSecondary = secondaryProfiles && secondaryProfiles.length > 0;
 
     return (
@@ -25,7 +27,7 @@ export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit 
         >
             {/* Header: Retour & Partager */}
             <div className="w-full p-6 z-20 flex justify-between items-center">
-                <BackButton onClick={onExit} label="Retour" />
+                <BackButton onClick={onBack || onExit} label="Retour" />
 
                 <ShareButton
                     title={`Mon résultat : ${profile.name}`}
@@ -181,21 +183,23 @@ export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit 
                         )}
 
                         {/* Return Button */}
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.5 }}
-                            className="w-full pt-4 flex justify-center"
-                        >
-                            <Button
-                                variant="primary"
-                                onClick={onExit}
-                                icon={<Icon icon="material-symbols:quiz" width={24} />}
-                                className="justify-center"
+                        {!hideExitButton && (
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.5 }}
+                                className="w-full pt-4 flex justify-center"
                             >
-                                Retour aux quizs
-                            </Button>
-                        </motion.div>
+                                <Button
+                                    variant="primary"
+                                    onClick={onExit}
+                                    icon={<Icon icon="material-symbols:quiz" width={24} />}
+                                    className="justify-center"
+                                >
+                                    Retour aux quizs
+                                </Button>
+                            </motion.div>
+                        )}
 
                     </div>
                 </div>

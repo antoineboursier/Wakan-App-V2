@@ -378,7 +378,8 @@ h6 {
   gap: var(--sizes-l);
   width: 100%;
   justify-items: center;
-  align-items: stretch;
+  align-items: start; /* Changed from stretch to start to prevent cards from stretching */
+  padding-bottom: 120px; /* Space for bottom navigation */
 }
 
 @media (min-width: 768px) {
@@ -414,3 +415,10 @@ h6 {
   scrollbar-width: none;
   /* Firefox */
 }
+/* Custom border mix for glass cards */
+@supports (color: color-mix(in lab, red, red)) {
+  .border-white-mix {
+    border-color: color-mix(in oklab, var(--color-white, #fff), transparent);
+  }
+}
+

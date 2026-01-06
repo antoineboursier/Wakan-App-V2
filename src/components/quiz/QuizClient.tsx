@@ -56,6 +56,18 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
                 const answerIds = Object.values(newAnswers);
                 const calculatedResult = await calculateQuizResult(quiz.id, answerIds);
                 setResult(calculatedResult);
+
+                // Save result to localStorage for persistence on hub page
+                if (calculatedResult) {
+                    const { saveQuizResult } = await import('@/utils/quizStorage');
+                    saveQuizResult(quiz.id, quiz.slug, calculatedResult);
+                }
+
+                // Instead of going directly to 'result', go to 'intro' to show the summary first
+                // OR go to 'result' first, and let user navigate back to summary?
+                // Request says "Une fois que j'ai fait un quizz...". Usually user wants to see result first.
+                // But the Summary view is "The display underneath".
+                // I will show FULL result first as is standard, but if they click "Back", they go to Intro+Summary.
                 setStep('result');
             } catch (e) {
                 console.error(e);
@@ -74,6 +86,14 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
     const handleExit = () => {
         // Return to hub
         router.push('/quiz');
+    };
+
+    const handleOpenResult = () => {
+        setStep('result');
+    };
+
+    const handleCloseResult = () => {
+        setStep('intro');
     };
 
     return (
@@ -99,6 +119,8 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
                             questionCount={questions.length}
                             onStart={handleStart}
                             onClose={handleExit}
+                            lastResult={result?.primary}
+                            onOpenResult={handleOpenResult}
                         />
                     )}
 
@@ -137,6 +159,7 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
                             secondaryProfiles={result.secondary}
                             resultSubtitle={quiz.short_title || quiz.title}
                             onExit={handleExit}
+                            onBack={handleCloseResult}
                         />
                     )}
 

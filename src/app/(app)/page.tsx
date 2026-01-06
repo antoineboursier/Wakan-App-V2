@@ -10,11 +10,12 @@ import { Icon } from "@iconify/react";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [lunarData, setLunarData] = useState<any>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function fetchLunarData() {
@@ -85,13 +86,15 @@ export default function DashboardPage() {
           </button>
 
           <div
-            className="relative flex items-center justify-center px-6 py-2 rounded-[16px] bg-[var(--background-800)] border border-[var(--background-500)] shadow-inner text-[var(--text-primary)] font-body text-lg capitalize w-full mx-3 text-center overflow-hidden"
+            onClick={() => dateInputRef.current?.showPicker?.()}
+            className="relative flex items-center justify-center px-6 py-2 rounded-[16px] bg-[var(--background-800)] border border-[var(--background-500)] shadow-inner text-[var(--text-primary)] font-body text-lg capitalize w-full mx-3 text-center overflow-hidden cursor-pointer"
             style={{
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2)"
             }}
           >
             {/* Input Date Natif Invisible (Overlay) */}
             <input
+              ref={dateInputRef}
               type="date"
               value={selectedDate.toISOString().split('T')[0]}
               onChange={(e) => {
@@ -99,7 +102,14 @@ export default function DashboardPage() {
                   setSelectedDate(new Date(e.target.value));
                 }
               }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10
+                [&::-webkit-calendar-picker-indicator]:opacity-0
+                [&::-webkit-calendar-picker-indicator]:absolute
+                [&::-webkit-calendar-picker-indicator]:inset-0
+                [&::-webkit-calendar-picker-indicator]:w-full
+                [&::-webkit-calendar-picker-indicator]:h-full
+                [&::-webkit-calendar-picker-indicator]:cursor-pointer
+              "
               aria-label="Choisir une date"
             />
 

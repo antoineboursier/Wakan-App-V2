@@ -6,6 +6,8 @@ import { Icon } from "@iconify/react";
 import { Button } from "../ui/Button";
 import { Separator } from "../ui/Separator";
 import { Loader } from "../ui/Loader";
+import { saveDrawResult } from "@/utils/drawStorage";
+import { DrawItem } from "@/types/draws";
 
 interface ComplexDrawItem {
     id: string;
@@ -28,6 +30,7 @@ interface ComplexDrawDisplayProps {
     isSecondBtnPremium?: boolean; // Default true in BO logic usually
     isPremium?: boolean;
     isLoadingComplex?: boolean;
+    slug?: string; // Added for persistence
 }
 
 interface SingleItemDisplayProps {
@@ -237,10 +240,31 @@ export function ComplexDrawDisplay({
     btnSecondIcon,
     isSecondBtnPremium = true,
     isPremium = false,
-    isLoadingComplex = false
+    isLoadingComplex = false,
+    slug
 }: ComplexDrawDisplayProps) {
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
     const [completedItems, setCompletedItems] = useState<number[]>([]);
+
+    // Helper: Is this a complex draw? (More than 1 item)
+    const isComplex = items.length > 1;
+
+    // UseEffect to save result
+    useEffect(() => {
+        if (slug) {
+            // Map ComplexDrawItem to DrawItem (partial match)
+            // We cast because saveDrawResult only uses a subset of properties anyway
+            const drawItems: any[] = items.map(i => ({
+                id: i.id,
+                name: i.name,
+                image_url: i.imageUrl,
+                short_description: i.description,
+                isReversed: i.isReversed
+            }));
+
+            saveDrawResult(slug, drawItems, isComplex ? 'complex' : 'simple');
+        }
+    }, [slug, items, isComplex]);
 
     // If skipping animation, we assume main item is complete
     useEffect(() => {

@@ -56,7 +56,7 @@ export function QuizQuestion({ question, currentIndex, totalCount, quizTitle, qu
                         {/* Header Section (Image + Title + Progress) */}
                         <div className="flex items-center gap-[24px] self-stretch">
                             {/* Thumbnail */}
-                            <div className="w-[80px] h-[80px] shrink-0 rounded-[4px] overflow-hidden shadow-lg border border-white/10">
+                            <div className="w-[80px] h-[80px] shrink-0 rounded-[4px] overflow-hidden shadow-lg border border-white-mix">
                                 {quizImage ? (
                                     <img src={quizImage} alt="" className="w-full h-full object-cover" />
                                 ) : (

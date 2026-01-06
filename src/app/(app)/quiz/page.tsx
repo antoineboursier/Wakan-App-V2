@@ -1,6 +1,7 @@
 import { getPublicQuizzes } from "@/app/actions/quiz-public";
 import { PageBackground } from "@/components/layout/PageBackground";
 import { QuizCardWrapper } from "./QuizCardWrapper";
+import { MasonryGrid } from "@/components/ui/MasonryGrid";
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export default async function QuizHubPage() {
                     </p>
                 </header>
 
-                <div id="quiz-list-grid" className="card-grid">
+                <MasonryGrid>
                     {quizzes.map((quiz) => (
                         <QuizCardWrapper
                             key={quiz.id}
@@ -31,15 +32,17 @@ export default async function QuizHubPage() {
                             publishedAt={quiz.published_at}
                             btnLabel={quiz.btn_label}
                             btnIcon={quiz.btn_icon}
+                            limitEnabled={quiz.limit_enabled}
+                            limitCount={quiz.limit_count}
+                            backgroundImageUrl={quiz.background_image_url}
                         />
                     ))}
-
                     {quizzes.length === 0 && (
                         <div className="empty-state">
                             Aucun quiz disponible pour le moment.
                         </div>
                     )}
-                </div>
+                </MasonryGrid>
             </div>
         </div>
     );

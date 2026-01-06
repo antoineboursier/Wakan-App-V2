@@ -130,6 +130,7 @@ export function DrawResultClient({
             isSecondBtnPremium={isSecondBtnPremium}
             isPremium={isPremium}
             isLoadingComplex={isLoadingComplex}
+            slug={slug}
         />
     );
 }

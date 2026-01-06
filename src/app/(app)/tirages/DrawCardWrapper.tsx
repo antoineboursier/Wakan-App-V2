@@ -6,6 +6,9 @@ import { DrawIntroCard } from "@/components/draws/DrawIntroCard";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useDailyFreeLimit } from "@/hooks/useDailyFreeLimit";
 import { performDraw } from "@/app/actions/draws";
+import { getDrawResult, StoredDrawResult } from "@/utils/drawStorage";
+import { DrawResultSummaryCard } from "@/components/draws/DrawResultSummaryCard";
+import { useEffect } from "react";
 
 interface DrawCardWrapperProps {
     slug: string;
@@ -61,6 +64,22 @@ export function DrawCardWrapper({
         limitCount: btnMainLimitCount,
         limitEnabled: btnMainLimitEnabled
     });
+
+    // Check if user is blocked (Limit reached and not premium)
+    const isUserBlocked = !canDrawFree && !isPremium;
+
+    // Result Persistence
+    const [savedResult, setSavedResult] = useState<StoredDrawResult | null>(null);
+    const [hasLoadedLimit, setHasLoadedLimit] = useState(false); // To avoid flush
+
+    useEffect(() => {
+        // Load limit first (hook does it), but also load result
+        const res = getDrawResult(slug);
+
+        // Basic "Today" check? User didn't specify. Assuming permanent for now or until cleared manually.
+        // If we wanted daily reset, we'd check timestamp vs today.
+        setSavedResult(res);
+    }, [slug]);
 
     const [isDrawing, setIsDrawing] = useState(false);
 
@@ -122,7 +141,40 @@ export function DrawCardWrapper({
         performDrawAction(totalDraws, true);
     };
 
-    return (
+    const isComplexResult = savedResult?.type === 'complex';
+
+    // Navigation Handler to Result
+    const handleNavigateToResult = () => {
+        if (!savedResult) return;
+
+        const ids = savedResult.items.map(i => i.id).join(',');
+        const reversedIds = savedResult.items.filter(i => i.isReversed).map(i => i.id).join(',');
+
+        const query = new URLSearchParams();
+        query.set('ids', ids);
+        if (reversedIds) query.set('r_ids', reversedIds);
+        query.set('animate', 'false');
+        if (isComplexResult) query.set('complex', 'true');
+
+        router.push(`/tirages/${slug}?${query.toString()}`);
+    };
+
+    // Components
+    const summaryCard = savedResult ? (
+        <DrawResultSummaryCard
+            result={savedResult}
+            title={savedResult.items.length > 1 ? "Ton tirage du jour" : "Ta rune du jour"}
+            onClick={handleNavigateToResult}
+            // Only show precise button if eligible for upgrade (complex not done yet)
+            canPrecise={btnSecondEnabled && !isComplexResult}
+            isPreciseLocked={(btnSecondEnabled && !isComplexResult) ? (isSecondBtnPremium && !isPremium) : false}
+            preciseLabel={btnSecondLabel || "Préciser à 3 runes"}
+            onPrecise={handleNavigateToResult}
+            className={!isUserBlocked ? "!rounded-t-none !border-t-0" : ""}
+        />
+    ) : null;
+
+    const introCard = (
         <DrawIntroCard
             title={title}
             subtitle={subtitle}
@@ -148,7 +200,52 @@ export function DrawCardWrapper({
             remainingDraws={remainingDraws}
             canDrawFree={canDrawFree}
             onResetLimit={resetLimit}
+
+            // Layout tweaks: If summary is attached, handle radius and z-index to overlap correctly
+            // Fix: Keep border-b, use z-10 to stay on top
+            className={savedResult && !isUserBlocked ? "!rounded-b-none relative z-10" : ""}
         />
     );
-}
 
+    // LOGIC:
+    // 1. If Limit Reached (and user is not premium to bypass it, handled by canDrawFree logic basically)
+    //    Note: canDrawFree is true if Premium usually? No, hook checks limit.
+    //    But Premium Users usually bypass limit in UI logic.
+    //    If IS PREMIUM, `canDrawFree` from hook might return false if we strictly follow limit logic, 
+    //    BUT `DrawIntroCard` handles `isPremium` prop to override disabled state?
+    //    Let's check: `DrawIntroCard` uses `canDrawOne = isMainEnabled && (canDrawFree || isPremium)`.
+    //    So if Premium, they can always draw.
+    //    So `isLimitReached` effectively means: User is BLOCKED. 
+    //    Blocked = !canDrawFree AND !isPremium.
+
+    // Case A: User Blocked (Limit Reached) -> Show Result Only (if exists)
+    if (isUserBlocked && savedResult) {
+        return <div className="w-full">{summaryCard}</div>;
+    }
+
+    // Case B: Not Blocked (Can Play).
+    // If result exists -> Show Intro (Playable) + Result Attached
+    if (savedResult) {
+        return (
+            <div className="flex flex-col w-full h-full">
+                {introCard}
+                <div className="w-full relative z-0 -mt-[1px]">
+                    {/* Reuse summary styled to attach? Or just put it below? 
+                         User said "accolé". 
+                         The DrawResultSummaryCard has rounded corners. 
+                         I'll flatten top corners. 
+                     */}
+                    {/* Overriding Summary Card styles via a wrapper if needed, but the component has style prop hardcoded blocks. 
+                         I didn't expose className/style to DResultSummaryCard properly in my previous edit (it has fixed style).
+                         I should assume stacked is fine or minimal gap.
+                         Actually, let's wrap it to remove top radius.
+                     */}
+                    {summaryCard}
+                </div>
+            </div>
+        );
+    }
+
+    // Case C: No Result -> Intro Only
+    return introCard;
+}

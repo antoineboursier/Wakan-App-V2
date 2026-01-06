@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { PageBackground } from "@/components/layout/PageBackground";
 import { DrawCardWrapper } from "./DrawCardWrapper";
+import { MasonryGrid } from "@/components/ui/MasonryGrid";
 
 const supabase = createClient(
     process.env.SUPABASE_URL!,
@@ -27,7 +28,7 @@ export default async function TiragesListPage() {
             <div id="tirages-list-content" className="page-content">
                 <h1 className="sr-only">Liste des Tirages</h1>
 
-                <div id="tirages-list-grid" className="card-grid">
+                <MasonryGrid>
                     {drawTypes.map((draw) => (
                         <DrawCardWrapper
                             key={draw.id}
@@ -52,7 +53,7 @@ export default async function TiragesListPage() {
                             Aucun oracle n'est disponible pour le moment.
                         </div>
                     )}
-                </div>
+                </MasonryGrid>
             </div>
         </div>
     );
