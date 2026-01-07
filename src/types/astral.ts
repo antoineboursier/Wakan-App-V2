@@ -19,6 +19,8 @@ export interface UserBirthData {
 export interface UserProfileData {
     firstName?: string;
     lastName?: string; // Optionnel
+    email?: string;
+    wakanId?: string;
     birthData?: UserBirthData;
     // Potentiellement d'autres infos contextuelles
 }

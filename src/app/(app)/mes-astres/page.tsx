@@ -21,7 +21,7 @@ import { InputField } from "@/components/ui/InputField";
 
 export default function MesAstresPage() {
     const router = useRouter();
-    const { profile, isLoaded, updateBirthData, updateProfile } = useUserProfile();
+    const { profile, isLoaded, updateBirthData, updateProfile, clearProfile } = useUserProfile();
 
     // Tabs state
     const [activeTab, setActiveTab] = useState("astres");
@@ -143,25 +143,26 @@ export default function MesAstresPage() {
                                 <InputField
                                     label="Nom"
                                     placeholder="Votre nom"
-                                    value={profile.firstName || ''}
-                                    onChange={(e) => updateProfile({ firstName: e.target.value })}
+                                    value={profile.lastName || ''}
+                                    onChange={(e) => updateProfile({ lastName: e.target.value })}
                                 />
                                 <InputField
                                     label="Prénom (Nom de patrouille)"
                                     placeholder="Votre prénom"
-                                    value={profile.lastName || ''}
-                                    onChange={(e) => updateProfile({ lastName: e.target.value })}
+                                    value={profile.firstName || ''}
+                                    onChange={(e) => updateProfile({ firstName: e.target.value })}
                                 />
                                 <InputField
                                     label="Email"
                                     type="email"
                                     placeholder="votre@email.com"
-                                    value="user@wakan.app"
+                                    value={profile.email || ''}
                                     icon="mdi:mail"
+                                    disabled
                                 />
                                 <InputField
                                     label="ID Wakan"
-                                    value="WAK-8842-XJ"
+                                    value={profile.wakanId || 'Non attribué'}
                                     disabled
                                     icon="game-icons:witch-flight"
                                     subtext="Cet identifiant est unique."
@@ -211,6 +212,7 @@ export default function MesAstresPage() {
                                     variant="secondary"
                                     icon={<Icon icon="mingcute:close-line" />}
                                     className=""
+                                    onClick={() => clearProfile()}
                                 >
                                     Se déconnecter
                                 </Button>

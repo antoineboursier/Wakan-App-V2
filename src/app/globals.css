@@ -22,7 +22,7 @@
   /* Headings, Main text */
   --text-secondary: #cdbcae;
   /* Subtitles */
-  --text-tertiary: #5C7C8A;
+  --text-tertiary: #969491;
 
   /* Muted text */
   --text-disabled: #939393;
@@ -378,8 +378,10 @@ h6 {
   gap: var(--sizes-l);
   width: 100%;
   justify-items: center;
-  align-items: start; /* Changed from stretch to start to prevent cards from stretching */
-  padding-bottom: 120px; /* Space for bottom navigation */
+  align-items: start;
+  /* Changed from stretch to start to prevent cards from stretching */
+  padding-bottom: 120px;
+  /* Space for bottom navigation */
 }
 
 @media (min-width: 768px) {
@@ -415,6 +417,7 @@ h6 {
   scrollbar-width: none;
   /* Firefox */
 }
+
 /* Custom border mix for glass cards */
 @supports (color: color-mix(in lab, red, red)) {
   .border-white-mix {
@@ -422,3 +425,13 @@ h6 {
   }
 }
 
+/* Override Browser Autofill Styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--background-900) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary);
+  transition: background-color 5000s ease-in-out 0s;
+}

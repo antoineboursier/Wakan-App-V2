@@ -32,6 +32,12 @@ export function InputField({
         onChange?.(e);
     };
 
+    // State for password visibility
+    const [showPassword, setShowPassword] = useState(false);
+    const isPasswordType = type === 'password';
+    // Determine effective type: if it was password and we show it, it becomes text. Otherwise keep original type.
+    const effectiveType = isPasswordType ? (showPassword ? 'text' : 'password') : type;
+
     // Déterminer si l'input a un comportement de picker natif
     const isPickerType = ['date', 'time', 'datetime-local', 'month', 'week', 'color'].includes(type);
 
@@ -117,7 +123,7 @@ export function InputField({
                     ${isPickerType && !disabled ? 'cursor-pointer' : ''}
                 `}
             >
-                {/* Optional Icon */}
+                {/* Optional Icon (Left) */}
                 {icon && (
                     <Icon
                         icon={icon}
@@ -128,7 +134,7 @@ export function InputField({
                 {/* Actual Input - Native avec customisation CSS */}
                 <input
                     ref={inputRef}
-                    type={type}
+                    type={effectiveType}
                     value={value}
                     onChange={handleChange}
                     disabled={disabled}
@@ -161,6 +167,25 @@ export function InputField({
                     `}
                     {...props}
                 />
+
+                {/* Password Toggle Icon (Right) */}
+                {isPasswordType && !disabled && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation(); // Empêcher d'autres clics
+                            setShowPassword(!showPassword);
+                        }}
+                        className={`outline-none focus:outline-none ml-1 ${classes.iconColor} hover:text-[var(--text-primary)] transition-colors`}
+                        aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    >
+                        <Icon
+                            icon={showPassword ? "carbon:view-off" : "carbon:view"}
+                            width="20"
+                            height="20"
+                        />
+                    </button>
+                )}
             </div>
 
             {/* Subtext */}

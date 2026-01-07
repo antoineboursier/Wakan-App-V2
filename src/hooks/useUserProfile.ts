@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { UserProfileData, UserBirthData } from '@/types/astral';
-
-const STORAGE_KEY = 'wakan_user_profile';
+import { createClient } from '@/utils/supabase/client';
 
 // État initial vide
 const DEFAULT_PROFILE: UserProfileData = {
     firstName: undefined,
     lastName: undefined,
+    email: undefined,
+    wakanId: undefined,
     birthData: {
         date: undefined,
         time: undefined,
@@ -17,60 +18,114 @@ const DEFAULT_PROFILE: UserProfileData = {
 };
 
 export function useUserProfile() {
+    const supabase = createClient();
     const [profile, setProfile] = useState<UserProfileData>(DEFAULT_PROFILE);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
 
-    // 1. Load from storage on mount
+    // 1. Load from Supabase on mount
     useEffect(() => {
-        try {
-            const stored = window.localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                setProfile(JSON.parse(stored));
+        let mounted = true;
+
+        async function fetchProfile() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    setUserId(user.id);
+
+                    const { data: profileData, error } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (profileData && mounted) {
+                        setProfile({
+                            firstName: profileData.first_name || undefined,
+                            lastName: profileData.last_name || undefined,
+                            email: profileData.email || undefined,
+                            wakanId: profileData.wakan_id || undefined,
+                            birthData: {
+                                date: profileData.birth_date || undefined,
+                                time: profileData.birth_time || undefined,
+                                place: (profileData.birth_city || profileData.birth_country) ? {
+                                    city: profileData.birth_city || '',
+                                    country: profileData.birth_country || ''
+                                } : undefined
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load user profile", e);
+            } finally {
+                if (mounted) setIsLoaded(true);
             }
-        } catch (e) {
-            console.error("Failed to load user profile", e);
-        } finally {
-            setIsLoaded(true);
         }
+
+        fetchProfile();
+
+        return () => { mounted = false; };
     }, []);
 
-    // 2. Save to storage on change
-    const updateProfile = (updates: Partial<UserProfileData>) => {
-        setProfile(prev => {
-            const newVal = { ...prev, ...updates };
-            // Deep merge pour birthData si nécessaire, mais pour l'instant simple merge top level
-            // Si on update birthData partiel, il faut faire attention.
-            if (updates.birthData && prev.birthData) {
-                newVal.birthData = { ...prev.birthData, ...updates.birthData };
-            }
+    // 2. Save to Supabase on change
+    const updateProfile = async (updates: Partial<UserProfileData>) => {
+        // Optimistic update
+        setProfile(prev => ({ ...prev, ...updates }));
 
-            try {
-                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-            } catch (e) {
-                console.error("Failed to save user profile", e);
-            }
-            return newVal;
-        });
+        if (!userId) return;
+
+        const dbUpdates: any = {};
+        if (updates.firstName !== undefined) dbUpdates.first_name = updates.firstName;
+        if (updates.lastName !== undefined) dbUpdates.last_name = updates.lastName;
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update(dbUpdates)
+                .eq('id', userId);
+
+            if (error) throw error;
+        } catch (e) {
+            console.error("Failed to save user profile", e);
+            // Revert state if needed, simplified here
+        }
     };
 
-    const updateBirthData = (data: Partial<UserBirthData>) => {
+    const updateBirthData = async (data: Partial<UserBirthData>) => {
+        // Optimistic update
         setProfile(prev => {
             const currentBirth = prev.birthData || {};
             const newBirth = { ...currentBirth, ...data };
-            const newVal = { ...prev, birthData: newBirth };
-
-            try {
-                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-            } catch (e) {
-                console.error("Failed to save birth data", e);
-            }
-            return newVal;
+            return { ...prev, birthData: newBirth };
         });
+
+        if (!userId) return;
+
+        const dbUpdates: any = {};
+        if (data.date !== undefined) dbUpdates.birth_date = data.date;
+        if (data.time !== undefined) dbUpdates.birth_time = data.time;
+        if (data.place !== undefined) {
+            dbUpdates.birth_city = data.place.city;
+            dbUpdates.birth_country = data.place.country;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update(dbUpdates)
+                .eq('id', userId);
+
+            if (error) throw error;
+        } catch (e) {
+            console.error("Failed to save birth data", e);
+        }
     };
 
-    const clearProfile = () => {
+    const clearProfile = async () => {
         setProfile(DEFAULT_PROFILE);
-        window.localStorage.removeItem(STORAGE_KEY);
+        await supabase.auth.signOut();
+        window.location.reload();
     };
 
     return {
