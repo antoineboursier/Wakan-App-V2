@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./admin.css";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
     title: "Wakan Admin",
@@ -23,7 +24,9 @@ export default function AdminLayout({
                 <div id="admin-layout-root" className="min-h-screen">
                     <AdminSidebar />
                     <main id="admin-main-content" className="p-6 md:ml-64 pt-20 md:pt-6 transition-all duration-300">
-                        {children}
+                        <ToastProvider>
+                            {children}
+                        </ToastProvider>
                     </main>
                 </div>
             </body>

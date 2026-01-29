@@ -11,8 +11,10 @@ import { GlassCard } from "@/components/ui/GlassCard";
 
 
 import { useState, useEffect, useRef } from "react";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export default function DashboardPage() {
+  const { profile, isLoaded } = useUserProfile();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [lunarData, setLunarData] = useState<any>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -61,9 +63,14 @@ export default function DashboardPage() {
       {/* --- HEADER (LOGO) --- */}
       <header className="relative w-full z-20 flex justify-center mt-16" id="dashboard-header">
         <h1 className="sr-only">Wakan - Tableau de bord</h1>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-2">
+          {isLoaded && (
+            <span className="title-lit text-[var(--accent-500)] animate-in fade-in slide-in-from-top-2">
+              Bonjour {profile.firstName || 'Voyageur'}
+            </span>
+          )}
           {process.env.NEXT_PUBLIC_APP_VERSION && (
-            <span className="legend text-[var(--text-tertiary)] mb-4">
+            <span className="legend text-[var(--text-tertiary)] opacity-60">
               v.{process.env.NEXT_PUBLIC_APP_VERSION}
             </span>
           )}

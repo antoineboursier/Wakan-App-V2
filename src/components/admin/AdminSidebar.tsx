@@ -14,6 +14,7 @@ export function AdminSidebar() {
         { href: "/admin", label: "Dashboard", icon: "mdi:view-dashboard-outline" },
         { href: "/admin/draw-types", label: "Tirages", icon: "mdi:cards-outline" },
         { href: "/admin/quizzes", label: "Quiz", icon: "mdi:puzzle-outline" },
+        { href: "/admin/astral", label: "Profils Astraux", icon: "mdi:stars" },
         { href: "/design-system", label: "Design System", icon: "mdi:palette-outline" },
     ];
 

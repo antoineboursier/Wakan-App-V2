@@ -68,57 +68,69 @@ export function useUserProfile() {
         return () => { mounted = false; };
     }, []);
 
-    // 2. Save to Supabase on change
-    const updateProfile = async (updates: Partial<UserProfileData>) => {
-        // Optimistic update
+    // 2. Local State Updaters
+    const updateProfile = (updates: Partial<UserProfileData>) => {
         setProfile(prev => ({ ...prev, ...updates }));
-
-        if (!userId) return;
-
-        const dbUpdates: any = {};
-        if (updates.firstName !== undefined) dbUpdates.first_name = updates.firstName;
-        if (updates.lastName !== undefined) dbUpdates.last_name = updates.lastName;
-
-        try {
-            const { error } = await supabase
-                .from('profiles')
-                .update(dbUpdates)
-                .eq('id', userId);
-
-            if (error) throw error;
-        } catch (e) {
-            console.error("Failed to save user profile", e);
-            // Revert state if needed, simplified here
-        }
     };
 
-    const updateBirthData = async (data: Partial<UserBirthData>) => {
-        // Optimistic update
+    const updateBirthData = (data: Partial<UserBirthData>) => {
         setProfile(prev => {
             const currentBirth = prev.birthData || {};
             const newBirth = { ...currentBirth, ...data };
             return { ...prev, birthData: newBirth };
         });
+    };
 
-        if (!userId) return;
-
-        const dbUpdates: any = {};
-        if (data.date !== undefined) dbUpdates.birth_date = data.date;
-        if (data.time !== undefined) dbUpdates.birth_time = data.time;
-        if (data.place !== undefined) {
-            dbUpdates.birth_city = data.place.city;
-            dbUpdates.birth_country = data.place.country;
-        }
+    // 3. Persistence Methods (Supabase)
+    const saveProfile = async (updates: Partial<UserProfileData>) => {
+        if (!userId) return false;
 
         try {
+            const dbUpdates: any = {};
+            if (updates.firstName !== undefined) dbUpdates.first_name = updates.firstName;
+            if (updates.lastName !== undefined) dbUpdates.last_name = updates.lastName;
+
+            // Only update if there are changes
+            if (Object.keys(dbUpdates).length === 0) return true;
+
             const { error } = await supabase
                 .from('profiles')
                 .update(dbUpdates)
                 .eq('id', userId);
 
             if (error) throw error;
+            return true;
+        } catch (e) {
+            console.error("Failed to save user profile", e);
+            return false;
+        }
+    };
+
+    const saveBirthData = async (data: Partial<UserBirthData>) => {
+        if (!userId) return false;
+
+        try {
+            const dbUpdates: any = {};
+            if (data.date !== undefined) dbUpdates.birth_date = data.date;
+            if (data.time !== undefined) dbUpdates.birth_time = data.time;
+            if (data.place !== undefined) {
+                dbUpdates.birth_city = data.place.city;
+                dbUpdates.birth_country = data.place.country;
+            }
+
+            // Only update if there are changes
+            if (Object.keys(dbUpdates).length === 0) return true;
+
+            const { error } = await supabase
+                .from('profiles')
+                .update(dbUpdates)
+                .eq('id', userId);
+
+            if (error) throw error;
+            return true;
         } catch (e) {
             console.error("Failed to save birth data", e);
+            return false;
         }
     };
 
@@ -131,8 +143,10 @@ export function useUserProfile() {
     return {
         profile,
         isLoaded,
-        updateProfile,
-        updateBirthData,
+        updateProfile,     // Updates local state only
+        saveProfile,       // Persists to DB
+        updateBirthData,   // Updates local state only
+        saveBirthData,     // Persists to DB
         clearProfile,
         // Helpers
         hasName: !!profile.firstName,

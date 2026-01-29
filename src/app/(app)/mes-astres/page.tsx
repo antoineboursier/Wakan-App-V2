@@ -17,14 +17,21 @@ import { Separator } from "@/components/ui/Separator";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { AnimatedTabs } from "@/components/ui/AnimatedTabs";
+import { useToast } from "@/components/ui/Toast";
 import { InputField } from "@/components/ui/InputField";
+import { CityAutocomplete } from "@/components/ui/CityAutocomplete";
+
+import { ZodiacProfileView } from "@/components/astral/ZodiacProfileView";
 
 export default function MesAstresPage() {
     const router = useRouter();
-    const { profile, isLoaded, updateBirthData, updateProfile, clearProfile } = useUserProfile();
+    const { profile, isLoaded, updateBirthData, saveBirthData, updateProfile, saveProfile, clearProfile } = useUserProfile();
+    const { showToast } = useToast();
 
     // Tabs state
     const [activeTab, setActiveTab] = useState("astres");
+    // View state
+    const [viewModuleId, setViewModuleId] = useState<string | null>(null);
 
     // Modal state
     const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
@@ -60,12 +67,38 @@ export default function MesAstresPage() {
     };
 
     const handleView = (module: AstralModule) => {
-        console.log("Navigating to module:", module.id);
-        alert(`Navigation vers le module : ${module.title}\n(Page en construction)`);
+        if (module.id === 'zodiac') {
+            setViewModuleId('zodiac');
+        } else {
+            console.log("Navigating to module:", module.id);
+            alert(`Navigation vers le module : ${module.title}\n(Page en construction)`);
+        }
     };
 
     const handleSaveCompletion = (data: any) => {
         updateBirthData(data);
+        saveBirthData(data).then(ok => {
+            if (ok) showToast("Informations enregistrées", "success");
+        });
+    };
+
+    const onBlurProfile = (field: keyof typeof profile) => {
+        const val = profile[field];
+        if (val !== undefined && typeof val === 'string') {
+            saveProfile({ [field]: val }).then(ok => {
+                if (ok) showToast("Profil mis à jour", "success");
+            });
+        }
+    };
+
+    const onBlurBirthData = (field: 'date' | 'time' | 'place') => {
+        if (!profile.birthData) return;
+        const val = profile.birthData[field];
+        if (val) {
+            saveBirthData({ [field]: val }).then(ok => {
+                if (ok) showToast("Informations astrales mises à jour", "success");
+            });
+        }
     };
 
     if (!isLoaded) return null;
@@ -101,29 +134,38 @@ export default function MesAstresPage() {
                             transition={{ duration: 0.3 }}
                             className="flex flex-col gap-6"
                         >
-                            {/* Premium Banner */}
-                            <div className="w-full">
-                                <PremiumCard variant="sales" />
-                            </div>
+                            {viewModuleId === 'zodiac' && profile.birthData?.date ? (
+                                <ZodiacProfileView
+                                    birthDate={profile.birthData.date}
+                                    onBack={() => setViewModuleId(null)}
+                                />
+                            ) : (
+                                <>
+                                    {/* Premium Banner */}
+                                    <div className="w-full">
+                                        <PremiumCard variant="sales" />
+                                    </div>
 
-                            {/* Solar Separator */}
-                            <div className="flex justify-center items-center gap-4 py-2 opacity-60">
-                                <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[var(--accent-500)]"></div>
-                                <Icon icon="mdi:white-balance-sunny" className="text-[var(--accent-500)] w-5 h-5 animate-pulse-slow" />
-                                <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[var(--accent-500)]"></div>
-                            </div>
+                                    {/* Solar Separator */}
+                                    <div className="flex justify-center items-center gap-4 py-2 opacity-60">
+                                        <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[var(--accent-500)]"></div>
+                                        <Icon icon="mdi:white-balance-sunny" className="text-[var(--accent-500)] w-5 h-5 animate-pulse-slow" />
+                                        <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[var(--accent-500)]"></div>
+                                    </div>
 
-                            {/* Grid des modules */}
-                            <MasonryGrid>
-                                {modules.map((module) => (
-                                    <AstralModuleCard
-                                        key={module.id}
-                                        module={module}
-                                        onComplete={() => handleComplete(module)}
-                                        onView={() => handleView(module)}
-                                    />
-                                ))}
-                            </MasonryGrid>
+                                    {/* Grid des modules */}
+                                    <MasonryGrid>
+                                        {modules.map((module) => (
+                                            <AstralModuleCard
+                                                key={module.id}
+                                                module={module}
+                                                onComplete={() => handleComplete(module)}
+                                                onView={() => handleView(module)}
+                                            />
+                                        ))}
+                                    </MasonryGrid>
+                                </>
+                            )}
                         </motion.div>
                     ) : (
                         <motion.div
@@ -145,12 +187,14 @@ export default function MesAstresPage() {
                                     placeholder="Votre nom"
                                     value={profile.lastName || ''}
                                     onChange={(e) => updateProfile({ lastName: e.target.value })}
+                                    onBlur={() => onBlurProfile('lastName')}
                                 />
                                 <InputField
                                     label="Prénom (Nom de patrouille)"
                                     placeholder="Votre prénom"
                                     value={profile.firstName || ''}
                                     onChange={(e) => updateProfile({ firstName: e.target.value })}
+                                    onBlur={() => onBlurProfile('firstName')}
                                 />
                                 <InputField
                                     label="Email"
@@ -180,6 +224,7 @@ export default function MesAstresPage() {
                                     type="date"
                                     value={profile.birthData?.date || ''}
                                     onChange={(e) => updateBirthData({ date: e.target.value })}
+                                    onBlur={() => onBlurBirthData('date')}
                                     icon="solar:calendar-date-linear"
                                 />
                                 <InputField
@@ -187,20 +232,27 @@ export default function MesAstresPage() {
                                     type="time"
                                     value={profile.birthData?.time || ''}
                                     onChange={(e) => updateBirthData({ time: e.target.value })}
+                                    onBlur={() => onBlurBirthData('time')}
                                     icon="solar:clock-circle-linear"
                                 />
-                                <InputField
+                                <CityAutocomplete
                                     label="Lieu de naissance"
-                                    placeholder="Ville, Pays"
-                                    icon="solar:map-point-linear"
+                                    placeholder="Rechercher une ville..."
                                     value={profile.birthData?.place?.city ? `${profile.birthData.place.city}, ${profile.birthData.place.country}` : ''}
-                                    onChange={(e) => {
-                                        const v = e.target.value;
-                                        const splitted = v.split(',');
-                                        const city = splitted[0]?.trim() || v;
-                                        const country = splitted[1]?.trim() || 'France';
-                                        updateBirthData({ place: { city, country, lat: 48.85, lng: 2.35 } });
+                                    onSelect={(city) => {
+                                        const placeData = {
+                                            city: city.name,
+                                            country: city.country,
+                                            lat: city.latitude,
+                                            lng: city.longitude,
+                                            timezone: city.timezone
+                                        };
+                                        updateBirthData({ place: placeData });
+                                        saveBirthData({ place: placeData }).then(ok => {
+                                            if (ok) showToast("Lieu de naissance enregistré", "success");
+                                        });
                                     }}
+                                    subtext="Saisissez votre ville pour le calcul précis."
                                 />
                             </div>
 
