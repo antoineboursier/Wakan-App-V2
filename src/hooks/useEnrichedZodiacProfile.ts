@@ -54,6 +54,10 @@ export function useEnrichedZodiacProfile(signSlug: string, decan: number) {
                     .eq('sign_slug', signSlug)
                     .single();
 
+                // Normalisation des planètes (Supabase peut retourner un tableau ou un objet selon la relation)
+                const rulingPlanet = rulerData?.planet && Array.isArray(rulerData.planet) ? rulerData.planet[0] : rulerData?.planet;
+                const decanPlanet = decanData?.planet && Array.isArray(decanData.planet) ? decanData.planet[0] : decanData?.planet;
+
                 // Construire le profil enrichi avec descriptions personnalisées
                 const enrichedProfile: EnrichedZodiacProfile = {
                     sign_slug: signData.slug,
@@ -63,10 +67,10 @@ export function useEnrichedZodiacProfile(signSlug: string, decan: number) {
                     modality: signData.modality,
 
                     // Planète maîtresse avec description + icône personnalisées
-                    ruling_planet: rulerData?.planet ? ({
-                        ...rulerData.planet,
-                        description: rulerData.description,
-                        icon_image_url: rulerData.icon_image_url
+                    ruling_planet: rulingPlanet ? ({
+                        ...rulingPlanet,
+                        description: rulerData?.description,
+                        icon_image_url: rulerData?.icon_image_url
                     } as any) : undefined,
 
                     // Infos du décan lui-même
@@ -76,10 +80,10 @@ export function useEnrichedZodiacProfile(signSlug: string, decan: number) {
                     } : undefined,
 
                     // Planète du décan avec description + icône personnalisées (priorité aux champs spécifiques du décan)
-                    decan_planet: decanData?.planet ? ({
-                        ...decanData.planet,
-                        description: decanData.planet_description || decanData.planet.description, // Fallback si vide
-                        icon_image_url: decanData.planet_icon_url || decanData.planet.icon_image_url
+                    decan_planet: decanPlanet ? ({
+                        ...decanPlanet,
+                        description: decanData?.planet_description || decanPlanet.description, // Fallback si vide
+                        icon_image_url: decanData?.planet_icon_url || decanPlanet.icon_image_url
                     } as any) : undefined,
 
                     season: seasonData,
