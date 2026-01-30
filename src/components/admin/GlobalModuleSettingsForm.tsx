@@ -24,9 +24,12 @@ export function GlobalModuleSettingsForm({ moduleId, initialConfig }: GlobalModu
 
     // Form State (Only editing background image for now as requested)
     const [backgroundImage, setBackgroundImage] = useState(initialConfig?.background_image_url || '');
+    const [isPremium, setIsPremium] = useState(initialConfig?.is_premium || false);
 
     // Detect Changes
-    const hasChanges = backgroundImage !== (initialConfig?.background_image_url || '');
+    const hasChanges =
+        backgroundImage !== (initialConfig?.background_image_url || '') ||
+        isPremium !== (initialConfig?.is_premium || false);
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -62,6 +65,7 @@ export function GlobalModuleSettingsForm({ moduleId, initialConfig }: GlobalModu
             .upsert({
                 id: moduleId,
                 background_image_url: backgroundImage,
+                is_premium: isPremium,
                 updated_at: new Date().toISOString()
             })
             .select();
@@ -148,6 +152,30 @@ export function GlobalModuleSettingsForm({ moduleId, initialConfig }: GlobalModu
                             Cette image remplacera le fond par défaut pour toutes les pages de détail du profil Zodiac.
                         </p>
                     </div>
+                </div>
+
+                {/* Premium Option */}
+                <div className="pt-4 border-t border-slate-700">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            checked={isPremium}
+                            onChange={(e) => setIsPremium(e.target.checked)}
+                            className="w-5 h-5 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                        />
+                        <div className="flex-1">
+                            <span className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
+                                Module Premium
+                            </span>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Si activé, l'accès au profil zodiacal complet nécessite un compte premium
+                            </p>
+                        </div>
+                        <Icon
+                            icon="mdi:crown"
+                            className={`w-5 h-5 transition-colors ${isPremium ? 'text-yellow-400' : 'text-slate-600'}`}
+                        />
+                    </label>
                 </div>
             </div>
         </div>

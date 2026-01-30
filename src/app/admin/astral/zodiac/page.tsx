@@ -58,56 +58,6 @@ export default async function ZodiacAdminPage() {
                 </div>
             </header>
 
-            {/* Quick Links to Enrichment Data */}
-            <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Link
-                    href="/admin/astral/zodiac/planets"
-                    className="flex items-center gap-2 p-3 bg-slate-800 rounded-lg border border-slate-700 hover:border-blue-500 hover:bg-slate-750 transition-colors group"
-                >
-                    <Icon icon="mdi:planet" width={20} className="text-blue-400" />
-                    <div className="flex-1">
-                        <div className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">Planètes Maîtresses</div>
-                        <div className="text-xs text-slate-500">10 entrées</div>
-                    </div>
-                    <Icon icon="mdi:chevron-right" width={16} className="text-slate-600 group-hover:text-blue-400" />
-                </Link>
-
-                <Link
-                    href="/admin/astral/zodiac/rulers"
-                    className="flex items-center gap-2 p-3 bg-slate-800 rounded-lg border border-slate-700 hover:border-blue-500 hover:bg-slate-750 transition-colors group"
-                >
-                    <Icon icon="mdi:crown" width={20} className="text-yellow-400" />
-                    <div className="flex-1">
-                        <div className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">Planète Maîtresse</div>
-                        <div className="text-xs text-slate-500">12 signes</div>
-                    </div>
-                    <Icon icon="mdi:chevron-right" width={16} className="text-slate-600 group-hover:text-blue-400" />
-                </Link>
-
-                <Link
-                    href="/admin/astral/zodiac/decans"
-                    className="flex items-center gap-2 p-3 bg-slate-800 rounded-lg border border-slate-700 hover:border-blue-500 hover:bg-slate-750 transition-colors group"
-                >
-                    <Icon icon="mdi:chart-timeline-variant" width={20} className="text-purple-400" />
-                    <div className="flex-1">
-                        <div className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">Décans</div>
-                        <div className="text-xs text-slate-500">36 entrées</div>
-                    </div>
-                    <Icon icon="mdi:chevron-right" width={16} className="text-slate-600 group-hover:text-blue-400" />
-                </Link>
-
-                <Link
-                    href="/admin/astral/zodiac/seasons"
-                    className="flex items-center gap-2 p-3 bg-slate-800 rounded-lg border border-slate-700 hover:border-blue-500 hover:bg-slate-750 transition-colors group"
-                >
-                    <Icon icon="mdi:weather-partly-cloudy" width={20} className="text-green-400" />
-                    <div className="flex-1">
-                        <div className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">Saisons Astrologiques</div>
-                        <div className="text-xs text-slate-500">12 signes</div>
-                    </div>
-                    <Icon icon="mdi:chevron-right" width={16} className="text-slate-600 group-hover:text-blue-400" />
-                </Link>
-            </div>
 
             {/* Global Settings */}
             <GlobalModuleSettingsForm moduleId="zodiac" initialConfig={moduleConfig} />

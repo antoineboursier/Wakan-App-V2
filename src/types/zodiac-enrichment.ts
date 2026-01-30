@@ -17,7 +17,7 @@ export interface ZodiacPlanet {
 export interface ZodiacSignPlanetRuler {
     id: string;
     sign_slug: string;
-    planet_slug: string;
+    master_planet_id: string; // Renommé de planet_slug
     description?: string; // Nouveau champ
     icon_image_url?: string; // Nouvelle icône
     created_at?: string;
@@ -34,6 +34,8 @@ export interface ZodiacSignDecan {
     planet_slug: string;
     description?: string; // Anciennement description_short
     icon_image_url?: string; // Nouvelle icône
+    planet_description?: string; // Description de la planète pour ce décan
+    planet_icon_url?: string; // Icône de la planète pour ce décan
     created_at?: string;
     updated_at?: string;
     // Relations
@@ -66,6 +68,12 @@ export interface EnrichedZodiacProfile {
 
     // Enrichissements
     ruling_planet?: ZodiacPlanet;
+    // Infos du décan lui-même (description, etc.)
+    decan_data?: {
+        description?: string;
+        icon_image_url?: string;
+    };
+    // Infos de la planète du décan
     decan_planet?: ZodiacPlanet;
     season?: ZodiacSignSeason;
 

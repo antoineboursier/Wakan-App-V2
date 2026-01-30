@@ -32,17 +32,17 @@ export function useEnrichedZodiacProfile(signSlug: string, decan: number) {
                     return;
                 }
 
-                // 2. Récupérer le maître principal
+                // 2. Récupérer le maître principal avec description custom
                 const { data: rulerData } = await supabase
                     .from('zodiac_sign_planet_rulers')
-                    .select('*, planet:zodiac_planets(*)')
+                    .select('description, icon_image_url, planet:zodiac_planets(*)')
                     .eq('sign_slug', signSlug)
                     .single();
 
-                // 3. Récupérer la planète du décan
+                // 3. Récupérer la planète du décan avec description custom
                 const { data: decanData } = await supabase
                     .from('zodiac_sign_decans')
-                    .select('*, planet:zodiac_planets(*)')
+                    .select('description, icon_image_url, planet_description, planet_icon_url, planet:zodiac_planets(*)')
                     .eq('sign_slug', signSlug)
                     .eq('decan', decan)
                     .single();
@@ -54,15 +54,34 @@ export function useEnrichedZodiacProfile(signSlug: string, decan: number) {
                     .eq('sign_slug', signSlug)
                     .single();
 
-                // Construire le profil enrichi
+                // Construire le profil enrichi avec descriptions personnalisées
                 const enrichedProfile: EnrichedZodiacProfile = {
                     sign_slug: signData.slug,
                     sign_name: signData.name_fr,
                     decan,
                     element: signData.element,
                     modality: signData.modality,
-                    ruling_planet: rulerData?.planet,
-                    decan_planet: decanData?.planet,
+
+                    // Planète maîtresse avec description + icône personnalisées
+                    ruling_planet: rulerData?.planet ? ({
+                        ...rulerData.planet,
+                        description: rulerData.description,
+                        icon_image_url: rulerData.icon_image_url
+                    } as any) : undefined,
+
+                    // Infos du décan lui-même
+                    decan_data: decanData ? {
+                        description: decanData.description,
+                        icon_image_url: decanData.icon_image_url
+                    } : undefined,
+
+                    // Planète du décan avec description + icône personnalisées (priorité aux champs spécifiques du décan)
+                    decan_planet: decanData?.planet ? ({
+                        ...decanData.planet,
+                        description: decanData.planet_description || decanData.planet.description, // Fallback si vide
+                        icon_image_url: decanData.planet_icon_url || decanData.planet.icon_image_url
+                    } as any) : undefined,
+
                     season: seasonData,
                     archetype: signData.archetype,
                     keywords: signData.keywords,
