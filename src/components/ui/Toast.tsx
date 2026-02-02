@@ -87,10 +87,10 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     };
 
     const colors = {
-        success: "text-[#4ADE80] border-[#4ADE80]/30 bg-[#4ADE80]/10",
-        error: "text-[#EF4444] border-[#EF4444]/30 bg-[#EF4444]/10",
-        info: "text-[#3B82F6] border-[#3B82F6]/30 bg-[#3B82F6]/10",
-        warning: "text-[#F59E0B] border-[#F59E0B]/30 bg-[#F59E0B]/10",
+        success: "text-[var(--alert-success)] border-[var(--alert-success)] bg-[var(--background-800)]",
+        error: "text-[var(--alert-error)] border-[var(--alert-error)] bg-[var(--background-800)]",
+        info: "text-[var(--accent-500)] border-[var(--accent-500)] bg-[var(--background-800)]",
+        warning: "text-[var(--alert-warning)] border-[var(--alert-warning)] bg-[var(--background-800)]",
     };
 
     return (

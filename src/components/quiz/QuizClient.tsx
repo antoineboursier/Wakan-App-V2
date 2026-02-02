@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Quiz, QuizQuestion, QuizProfile } from "@/types/quiz";
+import { Quiz, QuizQuestion } from "@/types/quiz";
 import { calculateQuizResult } from "@/app/actions/quiz-public";
 import { QuizIntro } from "./QuizIntro";
 import { QuizQuestion as QuizQuestionScreen } from "./QuizQuestion";
 import { Loader } from "../ui/Loader";
 import { QuizResult } from "./QuizResult";
 import { AnimatePresence, motion } from "framer-motion";
+import { FullscreenModal } from "../ui/FullscreenModal";
 
 interface QuizClientProps {
     quiz: Quiz;
@@ -43,31 +44,21 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
 
         // Next Question or Finish
         if (currentQuestionIndex < totalQuestions - 1) {
-            // Delay slightly for visual feedback? 
-            // Better to update instantly for "snappy" feel, transition handles the rest.
             setTimeout(() => {
                 setCurrentQuestionIndex(prev => prev + 1);
-            }, 250); // Petit délai pour laisser le temps de voir le click
+            }, 250);
         } else {
             // Finish
             setStep('calculating');
             try {
-                // Extract answer IDs array
                 const answerIds = Object.values(newAnswers);
                 const calculatedResult = await calculateQuizResult(quiz.id, answerIds);
                 setResult(calculatedResult);
 
-                // Save result to localStorage for persistence on hub page
                 if (calculatedResult) {
                     const { saveQuizResult } = await import('@/utils/quizStorage');
                     saveQuizResult(quiz.id, quiz.slug, calculatedResult);
                 }
-
-                // Instead of going directly to 'result', go to 'intro' to show the summary first
-                // OR go to 'result' first, and let user navigate back to summary?
-                // Request says "Une fois que j'ai fait un quizz...". Usually user wants to see result first.
-                // But the Summary view is "The display underneath".
-                // I will show FULL result first as is standard, but if they click "Back", they go to Intro+Summary.
                 setStep('result');
             } catch (e) {
                 console.error(e);
@@ -80,11 +71,13 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
     const handlePrev = () => {
         if (currentQuestionIndex > 0) {
             setCurrentQuestionIndex(prev => prev - 1);
+        } else {
+            // Back to intro if on first question?
+            setStep('intro');
         }
     };
 
     const handleExit = () => {
-        // Return to hub
         router.push('/quiz');
     };
 
@@ -96,75 +89,90 @@ export function QuizClient({ quiz, questions }: QuizClientProps) {
         setStep('intro');
     };
 
+    // Determine Modal Props based on step
+    const isResult = step === 'result';
+    const isPlaying = step === 'playing';
+
+    // Back action: 
+    // - playing: prev question (or back to intro)
+    // - result: back to summary (intro)
+    // - intro: none (or exit?) - usually intro has Close button
+    const onBackAction = isPlaying ? handlePrev : (isResult ? handleCloseResult : undefined);
+    const showBack = isPlaying || isResult;
+
     return (
-        <div className="fixed inset-0 z-[100] bg-slate-950 text-white overflow-hidden font-sans">
-            {/* Background Layer */}
-            <div className="absolute inset-0 z-0">
-                {quiz.background_image_url ? (
-                    <img src={quiz.background_image_url} alt="" className="w-full h-full object-cover opacity-30 blur-sm" />
-                ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-900 to-black" />
+        <FullscreenModal
+            isOpen={true}
+            backgroundImageUrl={quiz.background_image_url}
+
+            // Header Actions
+            onClose={handleExit} // Always allow closing via X
+            onBack={onBackAction}
+            showBack={showBack}
+            backLabel={isResult ? "Retour" : "Précédent"}
+
+            // Share (only on result)
+            showShare={isResult}
+            shareTitle={isResult && result ? `Mon résultat : ${result.primary.name}` : undefined}
+            shareText={isResult && result ? (result.primary.description_result || `J'ai obtenu ${result.primary.name}`) : undefined}
+
+            contentClassName="flex flex-col"
+        >
+            <AnimatePresence mode="wait">
+
+                {step === 'intro' && (
+                    <QuizIntro
+                        key="intro"
+                        quiz={quiz}
+                        questionCount={questions.length}
+                        onStart={handleStart}
+                        onClose={handleExit}
+                        lastResult={result?.primary}
+                        onOpenResult={handleOpenResult}
+                    />
                 )}
-                <div className="absolute inset-0 bg-black/40" /> {/* Overlay darkening */}
-            </div>
 
-            {/* Content Layer */}
-            <div className="relative z-10 w-full h-full">
-                <AnimatePresence mode="wait">
+                {step === 'playing' && (
+                    <QuizQuestionScreen
+                        key={`q-${currentQuestion?.id || 'end'}`}
+                        question={currentQuestion}
+                        currentIndex={currentQuestionIndex}
+                        totalCount={totalQuestions}
+                        quizTitle={quiz.title}
+                        quizImage={quiz.image_url}
+                        onSelectAnswer={handleAnswerSelect}
+                        onPrev={handlePrev}
+                        onQuit={handleExit}
+                        selectedAnswerId={answers[currentQuestion.id]}
+                    />
+                )}
 
-                    {step === 'intro' && (
-                        <QuizIntro
-                            key="intro"
-                            quiz={quiz}
-                            questionCount={questions.length}
-                            onStart={handleStart}
-                            onClose={handleExit}
-                            lastResult={result?.primary}
-                            onOpenResult={handleOpenResult}
-                        />
-                    )}
+                {step === 'calculating' && (
+                    <motion.div
+                        key="calc"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex flex-col items-center justify-center h-full space-y-4 flex-1"
+                    >
+                        <Loader className="scale-125 mb-4" />
+                        <p className="text-[var(--text-secondary)] animate-pulse para-big tracking-widest uppercase">Calcul de votre profil...</p>
+                    </motion.div>
+                )}
 
-                    {step === 'playing' && (
-                        <QuizQuestionScreen
-                            key={`q-${currentQuestion?.id || 'end'}`}
-                            question={currentQuestion}
-                            currentIndex={currentQuestionIndex}
-                            totalCount={totalQuestions}
-                            quizTitle={quiz.title}
-                            quizImage={quiz.image_url}
-                            onSelectAnswer={handleAnswerSelect}
-                            onPrev={handlePrev}
-                            onQuit={handleExit}
-                            selectedAnswerId={answers[currentQuestion.id]}
-                        />
-                    )}
+                {step === 'result' && result && (
+                    <QuizResult
+                        key="result"
+                        profile={result.primary}
+                        secondaryProfiles={result.secondary}
+                        resultSubtitle={quiz.short_title || quiz.title}
+                        onExit={handleExit}
+                        onBack={handleCloseResult}
+                        hideExitButton={true} // Already in modal header
+                    />
+                )}
 
-                    {step === 'calculating' && (
-                        <motion.div
-                            key="calc"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center h-full space-y-4"
-                        >
-                            <Loader className="scale-125 mb-4" />
-                            <p className="text-white/70 animate-pulse text-lg tracking-widest uppercase">Calcul de votre profil...</p>
-                        </motion.div>
-                    )}
-
-                    {step === 'result' && result && (
-                        <QuizResult
-                            key="res"
-                            profile={result.primary}
-                            secondaryProfiles={result.secondary}
-                            resultSubtitle={quiz.short_title || quiz.title}
-                            onExit={handleExit}
-                            onBack={handleCloseResult}
-                        />
-                    )}
-
-                </AnimatePresence>
-            </div>
-        </div>
+            </AnimatePresence>
+        </FullscreenModal>
     );
 }

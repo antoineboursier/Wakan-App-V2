@@ -1,10 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { DrawCardWrapper } from "../DrawCardWrapper";
-import { PageBackground } from "@/components/layout/PageBackground";
-import { BackButton } from "@/components/ui/BackButton";
-import { DrawResultClient } from "@/components/draws/DrawResultClient";
-import { ComplexDrawDisplay } from "@/components/draws/ComplexDrawDisplay";
-import { ShareButton } from "@/components/ui/ShareButton";
+import { DrawPageClient } from "./DrawPageClient";
 
 const supabase = createClient(
     process.env.SUPABASE_URL!,
@@ -96,86 +91,17 @@ export default async function DrawPage({
         : `Découvre ${drawType.title}`;
 
     return (
-        <div id="draw-detail-page" className="page-wrapper items-center p-6">
-            <PageBackground imageSrc={drawType.background_image_url || "/backgrounds/journal.png"} alt={drawType.title} />
-
-            <div id="draw-detail-content" className="page-content-narrow">
-
-                {/* Header: Back + Share */}
-                <div id="draw-detail-header" className="page-header-bar">
-                    <BackButton />
-                    {resultItem && (
-                        <ShareButton
-                            title={shareTitle}
-                            text={shareText}
-                        />
-                    )}
-                </div>
-
-                {/* Content */}
-                <div id="draw-detail-main" className="w-full flex justify-center">
-                    {resultItem ? (
-                        isComplexDraw && resultItems.length > 1 ? (
-                            // Complex Draw Display - Multiple items
-                            <ComplexDrawDisplay
-                                subtitle={drawType.intro_subtitle || drawType.title}
-                                items={resultItems.map(item => ({
-                                    id: item.id,
-                                    name: item.name,
-                                    imageUrl: item.image_url,
-                                    description: item.displayDescription,
-                                    isReversed: item.isReversed
-                                }))}
-                                distractorImages={distractorImages}
-                                shouldAnimate={animate === 'true'}
-                                slug={slug}
-                            />
-                        ) : (
-                            // Simple Draw Display - Single item
-                            <DrawResultClient
-                                subtitle={drawType.intro_subtitle || drawType.title}
-                                itemName={resultItem.name}
-                                itemImageUrl={resultItem.image_url}
-                                itemDescription={resultItem.displayDescription}
-                                distractorImages={distractorImages}
-                                shouldAnimate={animate === 'true'}
-                                isReversed={resultItem.isReversed}
-                                slug={slug}
-                                btnSecondEnabled={drawType.btn_second_enabled}
-                                btnSecondLabel={drawType.btn_second_label}
-                                btnSecondIcon={drawType.btn_second_icon}
-                                isSimpleDraw={isSimpleDraw}
-                                isSecondBtnPremium={drawType.btn_second_is_premium}
-                                firstItemId={resultItem.id}
-                                btnSecondDrawCount={drawType.btn_second_draw_count ?? 2}
-                                btnSecondIncludeFirst={drawType.btn_second_include_first ?? false}
-                            />
-                        )
-                    ) : (
-                        <div className="w-full">
-                            <DrawCardWrapper
-                                slug={drawType.slug}
-                                title={drawType.intro_title || drawType.title}
-                                subtitle={drawType.intro_subtitle || drawType.description || "..."}
-                                imageUrl={drawType.image_url}
-                                btnMainLabel={drawType.btn_main_label}
-                                btnMainIcon={drawType.btn_main_icon}
-                                btnSecondLabel={drawType.btn_second_label}
-                                btnSecondIcon={drawType.btn_second_icon}
-                                btnSecondEnabled={drawType.btn_second_enabled}
-                                isMainPremium={drawType.is_premium}
-                                isSecondBtnPremium={drawType.btn_second_is_premium}
-                                btnMainLimitEnabled={drawType.btn_main_limit_enabled}
-                                btnMainLimitCount={drawType.btn_main_limit_count}
-                                btnSecondDrawCount={drawType.btn_second_draw_count}
-                                btnSecondIncludeFirst={drawType.btn_second_include_first}
-                                standalone={true}
-                            />
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
+        <DrawPageClient
+            drawType={drawType}
+            resultItems={resultItems}
+            resultItem={resultItem}
+            isComplexDraw={isComplexDraw}
+            isSimpleDraw={isSimpleDraw}
+            distractorImages={distractorImages}
+            slug={slug}
+            shouldAnimate={animate === 'true'}
+            shareTitle={shareTitle}
+            shareText={shareText}
+        />
     );
 }
-

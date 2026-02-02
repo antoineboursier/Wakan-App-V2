@@ -42,7 +42,7 @@ export function DrawResultCardComplex({ items, globalDescription, onReset }: Dra
             {mainItem && (
                 <div className="flex items-center gap-4 animate-in slide-in-from-bottom duration-500">
                     <div className="w-[40px] h-[40px] relative flex-shrink-0 flex items-center justify-center effect-glow-yellow">
-                        <div className="w-full h-full bg-[var(--accent-700)] rounded-lg flex items-center justify-center text-[var(--background-900)] font-bold text-lg">
+                        <div className="w-full h-full bg-[var(--accent-700)] rounded-lg flex items-center justify-center text-[var(--background-900)] font-bold title-lit">
                             {mainItem.slug.charAt(0).toUpperCase()}
                         </div>
                     </div>
@@ -58,7 +58,7 @@ export function DrawResultCardComplex({ items, globalDescription, onReset }: Dra
                     {otherItems.map((item, index) => (
                         <div key={index + 1} className="flex items-center gap-4 animate-in slide-in-from-bottom duration-500" style={{ animationDelay: `${(index + 1) * 150}ms` }}>
                             <div className="w-[40px] h-[40px] relative flex-shrink-0 flex items-center justify-center effect-glow-yellow">
-                                <div className="w-full h-full bg-[var(--accent-700)] rounded-lg flex items-center justify-center text-[var(--background-900)] font-bold text-lg">
+                                <div className="w-full h-full bg-[var(--accent-700)] rounded-lg flex items-center justify-center text-[var(--background-900)] font-bold title-lit">
                                     {item.slug.charAt(0).toUpperCase()}
                                 </div>
                             </div>

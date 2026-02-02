@@ -66,6 +66,13 @@ export interface EnrichedZodiacProfile {
     element?: string;
     modality?: string;
 
+    // Nouvelles données visuelles et Premium
+    sign_icon_glow?: string;
+    sign_hero_image?: string;
+    is_master_planet_premium?: boolean;
+    is_decans_premium?: boolean;
+    is_season_premium?: boolean;
+
     // Enrichissements
     ruling_planet?: ZodiacPlanet;
     // Infos du décan lui-même (description, etc.)
@@ -81,4 +88,3 @@ export interface EnrichedZodiacProfile {
     archetype?: string;
     keywords?: string[];
 }
-

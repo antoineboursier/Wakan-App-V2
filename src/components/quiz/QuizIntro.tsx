@@ -26,10 +26,7 @@ export function QuizIntro({ quiz, questionCount, onStart, onClose, lastResult, o
             exit={{ opacity: 0 }}
             className="flex flex-col h-full relative"
         >
-            {/* Top Bar: Retour */}
-            <div className="w-full p-6 z-20 flex justify-start">
-                <BackButton onClick={onClose} label="Retour" />
-            </div>
+
 
             {/* Main Content */}
             <div className="flex-1 w-full overflow-y-auto">
@@ -80,16 +77,11 @@ export function QuizIntro({ quiz, questionCount, onStart, onClose, lastResult, o
 
                         {/* Title */}
                         <h1
-                            className="font-display"
+                            className="title-big font-display"
                             style={{
-                                color: "var(--accent-900, #F6AE31)",
+                                color: "var(--accent-900)",
                                 textAlign: "center",
-                                textShadow: "0px 4px 8px var(--background-800, #1C3039)",
-                                fontFamily: "Skranji",
-                                fontSize: "32px",
-                                fontStyle: "normal",
-                                fontWeight: 400,
-                                lineHeight: "100%",
+                                textShadow: "0px 4px 8px var(--background-800)",
                                 margin: 0
                             }}
                         >

@@ -8,6 +8,7 @@ import { ZodiacSignPlanetRuler, ZodiacSignDecan, ZodiacSignSeason, ZodiacPlanet 
 import Image from 'next/image';
 import { uploadImage } from '@/app/admin/actions';
 import { useRouter } from 'next/navigation';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 
 interface SignData {
     // Infos de base du signe
@@ -438,11 +439,11 @@ export default function EditZodiacSignPage({ params }: { params: Promise<{ slug:
                                 <label className="block text-sm font-medium text-slate-300 mb-1">
                                     Description principale
                                 </label>
-                                <textarea
+                                <RichTextEditor
                                     value={data.sign.description_main || ''}
-                                    onChange={(e) => updateSign('description_main', e.target.value)}
+                                    onChange={(html) => updateSign('description_main', html)}
+                                    placeholder="Description du signe..."
                                     rows={4}
-                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                                 />
                             </div>
 
@@ -544,12 +545,11 @@ export default function EditZodiacSignPage({ params }: { params: Promise<{ slug:
                                     <label className="block text-sm font-medium text-slate-300 mb-1">
                                         Description
                                     </label>
-                                    <textarea
+                                    <RichTextEditor
                                         value={data.ruler?.description || ''}
-                                        onChange={(e) => updateRuler('description', e.target.value)}
-                                        rows={12}
-                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                        onChange={(html) => updateRuler('description', html)}
                                         placeholder="Description de la planète maîtresse pour ce signe..."
+                                        rows={12}
                                     />
                                 </div>
                             </div>
@@ -594,12 +594,11 @@ export default function EditZodiacSignPage({ params }: { params: Promise<{ slug:
                                         <label className="block text-xs font-medium text-slate-300 mb-2">
                                             Description du décan
                                         </label>
-                                        <textarea
+                                        <RichTextEditor
                                             value={decan.description || ''}
-                                            onChange={(e) => updateDecan(decan.decan, 'description', e.target.value)}
-                                            rows={10}
-                                            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                            onChange={(html) => updateDecan(decan.decan, 'description', html)}
                                             placeholder="Description de ce décan..."
+                                            rows={10}
                                         />
                                     </div>
 
@@ -667,12 +666,11 @@ export default function EditZodiacSignPage({ params }: { params: Promise<{ slug:
                                             <label className="block text-xs font-medium text-slate-300 mb-2">
                                                 Description de la planète
                                             </label>
-                                            <textarea
+                                            <RichTextEditor
                                                 value={decan.planet_description || ''}
-                                                onChange={(e) => updateDecan(decan.decan, 'planet_description', e.target.value)}
-                                                rows={3}
-                                                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                                onChange={(html) => updateDecan(decan.decan, 'planet_description', html)}
                                                 placeholder="Description de la planète pour ce décan..."
+                                                rows={3}
                                             />
                                         </div>
                                     </div>
@@ -766,12 +764,11 @@ export default function EditZodiacSignPage({ params }: { params: Promise<{ slug:
                                 <label className="block text-sm font-medium text-slate-300 mb-1">
                                     Description
                                 </label>
-                                <textarea
+                                <RichTextEditor
                                     value={data.season?.content || ''}
-                                    onChange={(e) => updateSeason('content', e.target.value)}
-                                    rows={3}
-                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                    onChange={(html) => updateSeason('content', html)}
                                     placeholder="Description de la saison pour ce signe..."
+                                    rows={3}
                                 />
                             </div>
                         </div>

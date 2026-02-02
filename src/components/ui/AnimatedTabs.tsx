@@ -33,13 +33,9 @@ export function AnimatedTabs({ tabs, activeTab, onTabChange, className }: Animat
                         key={tab.id}
                         onClick={() => onTabChange(tab.id)}
                         className={cn(
-                            "w-max relative flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-[12px] text-sm font-bold transition-colors z-10 whitespace-nowrap group",
+                            "w-max relative flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-[12px] para-big font-bold transition-colors z-10 whitespace-nowrap group font-display",
                             isActive ? "text-[var(--accent-900)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         )}
-                        style={{
-                            fontFamily: '"League Spartan", sans-serif',
-                            fontSize: '16px',
-                        }}
                     >
                         {isActive && (
                             <motion.div

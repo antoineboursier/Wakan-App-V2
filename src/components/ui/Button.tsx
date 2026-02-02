@@ -4,6 +4,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "secondary";
     /** Icône optionnelle à afficher à droite du texte (par défaut) */
     icon?: React.ReactNode;
+    /** Si true, le bouton prend la largeur 100% du conteneur */
+    fullWidth?: boolean;
 }
 
 /**
@@ -16,15 +18,19 @@ export function Button({
     className,
     children,
     disabled,
+    fullWidth,
     ...props
 }: ButtonProps) {
 
     // Choix de la classe de base selon la variante
     const baseClass = variant === "primary" ? "btn-wakan-primary" : "btn-wakan-secondary";
+    // Largeur: full -> w-full + flex (pour écraser inline-flex), sinon w-fit par défaut
+    // Utilisation de ! pour surcharger le display: inline-flex du CSS global si nécessaire
+    const widthClass = fullWidth ? "!flex" : "w-fit";
 
     return (
         <button
-            className={`${baseClass} w-fit ${className || ""}`}
+            className={`${baseClass} ${widthClass} ${className || ""}`}
             disabled={disabled}
             {...props}
         >

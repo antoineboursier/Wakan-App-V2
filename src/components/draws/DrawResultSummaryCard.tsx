@@ -34,24 +34,23 @@ export function DrawResultSummaryCard({
 
     return (
         <div
-            className={`w-full h-full flex flex-col p-6 gap-6 relative overflow-hidden cursor-pointer hover:bg-white/5 transition-colors group ${className}`}
+            className={`w-full h-full flex flex-col p-6 gap-6 relative overflow-hidden cursor-pointer hover:bg-[var(--background-700)] transition-colors group ${className}`}
             onClick={onClick}
             style={{
                 borderRadius: "var(--sizes-s, 8px)",
                 background: "linear-gradient(180deg, rgba(24, 39, 46, 0.40) 0%, rgba(24, 39, 46, 0.70) 100%)",
-                border: "1px solid var(--stroke-card, rgba(255, 255, 255, 0.10))",
                 backdropFilter: "blur(2px)",
             }}
         >
             {/* Header */}
             <div className="flex justify-between items-start w-full z-10">
-                <h3 className="para-big text-[var(--accent-100)] font-bold opacity-90">{title}</h3>
+                <h3 className="para-big text-[var(--text-secondary)] font-bold opacity-90">{title}</h3>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <ShareButton
                         title={`Mon résultat : ${firstItem.name}`}
                         text={`J'ai tiré ${firstItem.name} ! ${firstItem.description || ''}`}
                         variant="icon"
-                        className="text-[var(--text-secondary)] hover:text-white"
+                        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     />
                 </div>
             </div>
@@ -69,7 +68,7 @@ export function DrawResultSummaryCard({
                         )}
                     </div>
                     {/* Name */}
-                    <h2 className="title-big text-[var(--accent-500)]">{firstItem.name}</h2>
+                    <h2 className="title-big font-display text-[var(--accent-900)]">{firstItem.name}</h2>
                 </div>
 
                 {/* Other Items (for Complex Draws) */}
@@ -107,7 +106,7 @@ export function DrawResultSummaryCard({
 
             {/* Footer / Button - Only for Precise/Upgrade */}
             {canPrecise && (
-                <div className="pt-2 z-10 w-full" onClick={(e) => e.stopPropagation()}>
+                <div className="pt-2 z-10" onClick={(e) => e.stopPropagation()}>
                     <Button
                         variant="secondary"
                         onClick={onPrecise}

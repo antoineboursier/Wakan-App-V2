@@ -61,7 +61,7 @@ export function DrawIntroCard({
     const isSecondLocked = !isPremium && isSecondBtnPremium;
 
     return (
-        <GlassCard id="draw-intro-card" className={`w-full p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-white-mix h-full relative ${className || ''}`}>
+        <GlassCard id="draw-intro-card" className={`w-full p-0 flex flex-col items-start text-left overflow-hidden bg-[var(--background-900)] border-[1px] border-[var(--text-tertiary)] h-full relative ${className || ''}`}>
 
             {/* Badge (ex: Nouveau) */}
             {badge}
@@ -77,7 +77,7 @@ export function DrawIntroCard({
                 <div
                     className="absolute inset-0"
                     style={{
-                        background: "linear-gradient(180deg, rgba(24, 39, 46, 0.00) 0%, #18272E 100%)"
+                        background: "linear-gradient(180deg, rgba(24, 39, 46, 0.00) 0%, var(--background-900) 100%)"
                     }}
                 ></div>
             </div>
@@ -141,7 +141,7 @@ export function DrawIntroCard({
                                         <button
                                             type="button"
                                             onClick={onResetLimit}
-                                            className="text-[10px] uppercase tracking-wider text-slate-500 hover:text-[var(--accent-500)] underline transition-colors"
+                                            className="para-lit uppercase tracking-wider text-[var(--text-disabled)] hover:text-[var(--accent-500)] underline transition-colors"
                                         >
                                             [Reset]
                                         </button>

@@ -38,7 +38,7 @@ export function DrawResultCardSimple({ item, onGoDeeper, isPremium }: DrawResult
                 {/* Icon 40x40 with glow */}
                 <div className="w-[40px] h-[40px] relative flex-shrink-0 flex items-center justify-center effect-glow-yellow">
                     {/* Placeholder visual waiting for real assets */}
-                    <div className="w-full h-full bg-[var(--accent-900)] rounded-lg flex items-center justify-center text-[var(--background-900)] font-bold text-xl">
+                    <div className="w-full h-full bg-[var(--accent-900)] rounded-lg flex items-center justify-center text-[var(--background-900)] font-bold title-lit">
                         {item.slug.charAt(0).toUpperCase()}
                     </div>
                 </div>

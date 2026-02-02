@@ -18,7 +18,7 @@ export function AstralModuleCard({ module, onComplete, onView }: AstralModuleCar
 
     return (
         <GlassCard
-            className="flex flex-col relative overflow-hidden group transition-all duration-300 hover:bg-white/5 border-white-mix p-0 h-full"
+            className="flex flex-col relative overflow-hidden group transition-all duration-300 hover:bg-[var(--background-700)] border-white-mix p-0 h-full"
             style={{
                 borderColor: isUnlocked ? 'var(--stroke-card)' : 'transparent'
             }}
@@ -46,8 +46,8 @@ export function AstralModuleCard({ module, onComplete, onView }: AstralModuleCar
 
                 {/* Badge Title - Floating */}
                 <div className="absolute bottom-4 left-4 z-10">
-                    <div className="bg-[var(--background-800)]/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-lg shadow-lg">
-                        <h3 className="title-lit text-white tracking-wide">
+                    <div className="bg-[var(--background-800)]/80 backdrop-blur-md border border-[var(--stroke-secondary)] px-3 py-1 rounded-lg shadow-lg">
+                        <h3 className="title-lit text-[var(--text-primary)] tracking-wide">
                             {title}
                         </h3>
                     </div>
@@ -62,7 +62,7 @@ export function AstralModuleCard({ module, onComplete, onView }: AstralModuleCar
                     {features?.map((feature, idx) => (
                         <div
                             key={idx}
-                            className="flex items-center justify-between py-1 border-b border-white/5 last:border-0"
+                            className="flex items-center justify-between py-1 border-b border-[var(--background-500)] last:border-0"
                         >
                             <span className="para-lit text-[var(--text-secondary)]">
                                 {feature}
@@ -72,10 +72,10 @@ export function AstralModuleCard({ module, onComplete, onView }: AstralModuleCar
                             {isUnlocked ? (
                                 <Icon
                                     icon="mdi:check-circle"
-                                    className="text-emerald-400/80 w-5 h-5"
+                                    className="text-[var(--alert-success)] w-5 h-5"
                                 />
                             ) : (
-                                <div className="bg-white/10 p-1 rounded-md">
+                                <div className="bg-[var(--background-700)] p-1 rounded-md">
                                     <Icon
                                         icon="mdi:plus"
                                         className="text-[var(--text-tertiary)] w-3 h-3"
@@ -89,13 +89,11 @@ export function AstralModuleCard({ module, onComplete, onView }: AstralModuleCar
                 {/* 3. CTA Action */}
                 <div className="mt-auto pt-4">
                     {isUnlocked ? (
-                        // Unlocked State: Maybe show detailed stats or simple view button? 
-                        // For now design implies "Completed" view is distinct, handled by Parent or different component? 
-                        // We'll keep a "View" button for now.
+                        // Unlocked State: "View" button
                         <Button
-                            variant="primary" // Keeping primary for consistency but Figma shows bespoke cards for Unlocked Zodiac
+                            variant="primary" // Keeping primary for consistency
                             onClick={onView}
-                            className="w-full justify-center !bg-transparent border border-[var(--text-tertiary)] hover:!bg-white/5"
+                            className="w-full justify-center !bg-transparent border border-[var(--text-tertiary)] hover:!bg-[var(--background-700)]"
                             icon={<Icon icon="mdi:eye-outline" />}
                         >
                             Consulter
@@ -107,7 +105,7 @@ export function AstralModuleCard({ module, onComplete, onView }: AstralModuleCar
                             className="w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg group-hover:shadow-[0_0_20px_rgba(246,174,49,0.2)]"
                             style={{
                                 background: "linear-gradient(90deg, #F6AE31 0%, #D48C0F 100%)",
-                                color: "#1C3039", // Dark tex for contrast on yellow
+                                color: "var(--background-900)", // Dark tex for contrast on yellow
                             }}
                         >
                             <span className="ui-button-text">Compléter</span>

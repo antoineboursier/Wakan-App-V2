@@ -20,24 +20,12 @@ export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit,
     const hasSecondary = secondaryProfiles && secondaryProfiles.length > 0;
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+        <div
             className="flex flex-col h-full relative"
         >
-            {/* Header: Retour & Partager */}
-            <div className="w-full p-6 z-20 flex justify-between items-center">
-                <BackButton onClick={onBack || onExit} label="Retour" />
-
-                <ShareButton
-                    title={`Mon résultat : ${profile.name}`}
-                    text={profile.description_result || `J'ai obtenu le profil ${profile.name} !`}
-                />
-            </div>
-
             {/* Main Content */}
             <div className="flex-1 w-full overflow-y-auto">
-                <div className="min-h-full flex flex-col items-center p-4 pt-0 pb-20 justify-center">
+                <div className="min-h-full flex flex-col items-center p-4 pt-0 pb-20 justify-start">
 
                     {/* Card Container */}
                     <div
@@ -78,8 +66,8 @@ export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit,
                                     }}
                                 />
                             ) : (
-                                <div className="w-[160px] h-[160px] bg-white/5 flex items-center justify-center rounded-[8px]">
-                                    <Icon icon="mdi:account" className="w-12 h-12 text-white/20" />
+                                <div className="w-[160px] h-[160px] bg-[var(--background-700)] flex items-center justify-center rounded-[8px]">
+                                    <Icon icon="mdi:account" className="w-12 h-12 text-[var(--text-disabled)]" />
                                 </div>
                             )}
 
@@ -150,7 +138,7 @@ export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit,
                                                         {p.image_url ? (
                                                             <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <Icon icon="mdi:account" className="w-full h-full p-4 text-white/20" />
+                                                            <Icon icon="mdi:account" className="w-full h-full p-4 text-[var(--text-disabled)]" />
                                                         )}
                                                     </div>
                                                     {/* Bar */}
@@ -204,6 +192,6 @@ export function QuizResult({ profile, secondaryProfiles, resultSubtitle, onExit,
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }

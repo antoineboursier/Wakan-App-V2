@@ -61,10 +61,17 @@ export function useEnrichedZodiacProfile(signSlug: string, decan: number) {
                 // Construire le profil enrichi avec descriptions personnalisées
                 const enrichedProfile: EnrichedZodiacProfile = {
                     sign_slug: signData.slug,
-                    sign_name: signData.name_fr,
+                    sign_name: signData.display_name, // Correction: utilise display_name
                     decan,
                     element: signData.element,
                     modality: signData.modality,
+
+                    // Ajouts visuels et Premium
+                    sign_icon_glow: signData.icon_glow,
+                    sign_hero_image: signData.hero_image,
+                    is_master_planet_premium: signData.master_planet_is_premium,
+                    is_decans_premium: signData.decans_is_premium,
+                    is_season_premium: signData.season_is_premium,
 
                     // Planète maîtresse avec description + icône personnalisées
                     ruling_planet: rulingPlanet ? ({

@@ -56,12 +56,12 @@ export function QuizResultSummary({ profile, quizTitle, onClick }: QuizResultSum
             {/* Identity Row */}
             <div className="flex items-center gap-4 w-full">
                 {/* Thumbnail */}
-                <div className="w-[80px] h-[80px] shrink-0 rounded-[4px] overflow-hidden bg-white/10">
+                <div className="w-[80px] h-[80px] shrink-0 rounded-[4px] overflow-hidden bg-[var(--background-700)]">
                     {profile.image_url ? (
                         <img src={profile.image_url} alt={profile.name} className="w-full h-full object-cover" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                            <Icon icon="mdi:account" className="w-8 h-8 text-white/20" />
+                            <Icon icon="mdi:account" className="w-8 h-8 text-[var(--text-disabled)]" />
                         </div>
                     )}
                 </div>

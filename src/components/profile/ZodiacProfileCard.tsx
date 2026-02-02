@@ -1,86 +1,237 @@
-import React from 'react';
-import { GlassCard } from '../ui/GlassCard';
+"use client";
 
-interface ZodiacProfileProps {
-    signName: string;
-    decan: string;
-    ascendant: string;
-    element: string;
-    northNode?: string;
-    southNode?: string;
-    iconUrl: string; // Placeholder for now
+import React, { useState, useMemo } from 'react';
+import { Icon } from '@iconify/react';
+import { CorrectionDataModal } from './CorrectionDataModal';
+import { Button } from '../ui/Button';
+import { cn } from '@/lib/utils';
+
+interface AstralDataPoint {
+    label: string;
+    value?: string;
+    iconUrl?: string;
+    isLocked?: boolean;
+    missingRequirement?: 'birthTime' | 'birthPlace' | 'birthDate';
 }
 
-export function ZodiacProfileCard({ signName, decan, ascendant, element, northNode, southNode, iconUrl }: ZodiacProfileProps) {
+interface ZodiacProfileCardProps {
+    signName: string;
+    signIconUrl: string;
+    heroImageUrl?: string;
+    decan?: string;
+    ascendant?: AstralDataPoint;
+    rulingPlanet?: AstralDataPoint;
+    onAddInfo: (data: { time?: string; place?: any }) => void;
+    onViewDetail: () => void;
+    className?: string;
+}
+
+/**
+ * Détermine la priorité de tri d'un data point :
+ * 0 = Info remplie (a une valeur, pas de missing, pas locked)
+ * 1 = Info manquante (missingRequirement)
+ * 2 = Info premium verrouillée (isLocked)
+ */
+function getSortPriority(dp: AstralDataPoint): number {
+    // Si on a une valeur et pas de contrainte → rempli
+    if (dp.value && !dp.missingRequirement && !dp.isLocked) return 0;
+    // Si info manquante → bouton Add
+    if (dp.missingRequirement) return 1;
+    // Si premium verrouillé
+    if (dp.isLocked) return 2;
+    // Fallback (devrait pas arriver)
+    return 3;
+}
+
+export function ZodiacProfileCard({
+    signName,
+    signIconUrl,
+    heroImageUrl,
+    decan,
+    ascendant,
+    rulingPlanet,
+    onAddInfo,
+    onViewDetail,
+    className
+}: ZodiacProfileCardProps) {
+    const [isCorrectionModalOpen, setIsCorrectionModalOpen] = useState(false);
+    const [missingFields, setMissingFields] = useState<Array<'birthTime' | 'birthPlace'>>([]);
+
+    const handleOpenCorrection = (requirement: 'birthTime' | 'birthPlace' | 'birthDate') => {
+        if (requirement === 'birthTime') setMissingFields(['birthTime']);
+        if (requirement === 'birthPlace') setMissingFields(['birthPlace']);
+        setIsCorrectionModalOpen(true);
+    };
+
+    // Tri automatique des data points selon leur état
+    const sortedDataPoints = useMemo(() => {
+        const points: AstralDataPoint[] = [];
+        if (ascendant) points.push(ascendant);
+        if (rulingPlanet) points.push(rulingPlanet);
+
+        return points.sort((a, b) => getSortPriority(a) - getSortPriority(b));
+    }, [ascendant, rulingPlanet]);
+
     return (
-        <GlassCard
-            className="w-full p-6 flex flex-col items-center gap-4"
-            style={{
-                background: 'linear-gradient(180deg, rgba(24, 39, 46, 0.30) 0%, rgba(24, 39, 46, 0.60) 50%, rgba(24, 39, 46, 0.90) 100%)',
-                backdropFilter: 'blur(4px)',
-                WebkitBackdropFilter: 'blur(4px)'
-            }}
-        >
-            {/* Header / Title */}
-            <div className="w-full flex justify-between items-center border-b border-[var(--background-500)] pb-4 mb-2">
-                <span className="para-big text-[var(--text-primary)]">Profil Zodiacal</span>
-                <span className="text-xs text-[var(--accent-500)] bg-[var(--background-700)] px-2 py-1 rounded-full uppercase tracking-wider">Actif</span>
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="flex w-full items-center gap-6">
-
-                {/* Visual Representation */}
-                <div className="flex-shrink-0 relative">
-                    {/* Placeholder Circular Display */}
-                    <div className="w-20 h-20 rounded-full bg-[var(--background-700)] flex items-center justify-center border border-[var(--background-500)]">
-                        {/* Replace with actual image later */}
-                        <div className="text-[var(--text-tertiary)] text-xs text-center px-2">Image {signName}</div>
-                    </div>
-                </div>
-
-                {/* Data Points */}
-                <div className="flex flex-col gap-3 flex-1">
-                    {/* Signe */}
-                    <div className="flex flex-col">
-                        <span className="para-lit text-[var(--text-tertiary)]">Signe Solaire</span>
-                        <div className="flex items-baseline gap-2">
-                            <span className="title-lit text-[var(--text-primary)]">{signName}</span>
-                            <span className="text-xs text-[var(--text-secondary)] border border-[var(--background-500)] px-1.5 rounded bg-[var(--background-800)] opacity-70">{decan}</span>
-                        </div>
-                    </div>
-
-                    {/* Ascendant */}
-                    <div className="flex flex-col">
-                        <span className="para-lit text-[var(--text-tertiary)]">Ascendant</span>
-                        <span className="para-big text-[var(--text-secondary)]">{ascendant}</span>
-                    </div>
-
-                    {/* Element */}
-                    <div className="flex flex-col">
-                        <span className="para-lit text-[var(--text-tertiary)]">Élément majoritaire</span>
-                        <span className="para-big text-[var(--text-secondary)]">{element}</span>
-                    </div>
-
-                    {/* Nœuds Lunaires */}
-                    {(northNode || southNode) && (
-                        <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-[var(--background-500)]/30">
-                            {northNode && (
-                                <div className="flex justify-between items-baseline">
-                                    <span className="para-lit text-[var(--text-tertiary)]">Nœud Nord</span>
-                                    <span className="para text-[var(--text-secondary)]">{northNode}</span>
-                                </div>
-                            )}
-                            {southNode && (
-                                <div className="flex justify-between items-baseline">
-                                    <span className="para-lit text-[var(--text-tertiary)]">Nœud Sud</span>
-                                    <span className="para text-[var(--text-secondary)]">{southNode}</span>
-                                </div>
-                            )}
+        <>
+            <div
+                className={cn(
+                    "flex flex-col items-start self-stretch rounded-[var(--sizes-s,8px)] border border-[var(--text-tertiary)] bg-[var(--background-900)] backdrop-blur-[2px] overflow-hidden",
+                    className
+                )}
+            >
+                {/* Hero Image avec gradient overlay */}
+                <div
+                    className="h-[160px] w-full self-stretch relative overflow-hidden"
+                    style={{
+                        borderRadius: 'var(--sizes-s, 8px) var(--sizes-s, 8px) 0 0',
+                        background: heroImageUrl
+                            ? `linear-gradient(180deg, rgba(24, 39, 46, 0.00) 0%, var(--background-900, #18272E) 100%), url(${heroImageUrl}) lightgray 50% / cover no-repeat`
+                            : 'var(--background-800)'
+                    }}
+                >
+                    {!heroImageUrl && (
+                        <div className="w-full h-full flex items-center justify-center text-[var(--text-tertiary)]">
+                            <Icon icon="mdi:image-filter-hdr" width={48} opacity={0.5} />
                         </div>
                     )}
                 </div>
+
+                {/* Content Container - Overlap sur l'image */}
+                <div className="flex flex-col items-start p-[24px] gap-[24px] self-stretch -mt-10 relative z-10">
+
+                    {/* Header: Badge & Main Sign */}
+                    <div className="w-full flex flex-col items-start gap-4">
+                        {/* Badge Profil */}
+                        <div className="flex py-[8px] px-[8px] items-center rounded-[var(--sizes-s,8px)] bg-[var(--background-800)]">
+                            <span className="title-lit text-[var(--text-primary)]">Profil Zodiac</span>
+                        </div>
+
+                        {/* Main Sign Info */}
+                        <div className="flex justify-center items-center gap-[24px] self-stretch">
+                            {/* Icon Signe */}
+                            <div className="w-[40px] h-[40px] relative flex-shrink-0">
+                                <img
+                                    src={signIconUrl}
+                                    alt="Icon"
+                                    className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(246,174,49,0.6)]"
+                                />
+                            </div>
+
+                            {/* Text Info */}
+                            <div className="flex flex-col justify-center items-start gap-[4px] flex-1">
+                                <h2
+                                    className="title-big text-[var(--accent-900)]"
+                                    style={{ textShadow: "0 4px 8px var(--background-800)" }}
+                                >
+                                    {signName}
+                                </h2>
+                                {decan && (
+                                    <span className="para-big text-[var(--accent-700)]">
+                                        {decan}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Specific Infos - Auto sorted: Filled > Missing > Locked */}
+                    <div className="flex flex-col gap-4 w-full">
+                        {sortedDataPoints.map((dp, index) => (
+                            <DataPointRow
+                                key={dp.label + index}
+                                data={dp}
+                                onAdd={() => handleOpenCorrection(dp.missingRequirement!)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Footer Action */}
+                    <Button
+                        variant="secondary"
+                        fullWidth
+                        className="justify-between"
+                        icon={<Icon icon="mdi:arrow-right" />}
+                        onClick={onViewDetail}
+                    >
+                        Voir le détail
+                    </Button>
+
+                </div>
             </div>
-        </GlassCard>
+
+            <CorrectionDataModal
+                isOpen={isCorrectionModalOpen}
+                onClose={() => setIsCorrectionModalOpen(false)}
+                missingFields={missingFields}
+                onSave={onAddInfo}
+            />
+        </>
+    );
+}
+
+// Sub-component for a row (Ascendant, Planet...)
+function DataPointRow({ data, onAdd }: { data?: AstralDataPoint, onAdd: () => void }) {
+    if (!data) return null;
+
+    // cas A: Manque info calcul -> Afficher Add
+    if (data.missingRequirement) {
+        return (
+            <div className="flex items-center gap-2 self-stretch py-2">
+                <div className="flex-1 flex items-center gap-2">
+                    {data.isLocked && <Icon icon="solar:lock-bold" className="text-[var(--text-disabled)]" width={20} />}
+                    <span className="para text-[var(--text-secondary)]">{data.label}</span>
+                </div>
+
+                <button
+                    onClick={onAdd}
+                    className="p-1 rounded-full hover:bg-[var(--background-800)] transition-colors group"
+                    aria-label={`Ajouter info pour ${data.label}`}
+                >
+                    <Icon icon="icon-park-solid:add" className="text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" width={24} height={24} />
+                </button>
+            </div>
+        );
+    }
+
+    // Cas B: Locked but calculated -> Afficher Lock
+    if (data.isLocked) {
+        return (
+            <div className="flex items-center gap-[24px] self-stretch py-1 opacity-60">
+                <div className="w-[40px] h-[40px] flex items-center justify-center bg-[var(--background-800)] rounded-full">
+                    <Icon icon="solar:lock-bold" className="text-[var(--text-disabled)]" width={20} />
+                </div>
+                <div className="flex flex-col justify-center items-start gap-[4px] flex-1">
+                    <span className="para-lit text-[var(--text-disabled)]">{data.label}</span>
+                    <span className="title-med text-[var(--text-disabled)]">Premium</span>
+                </div>
+            </div>
+        );
+    }
+
+    // Cas C: Standard Display (Info remplie)
+    return (
+        <div className="flex items-center gap-[24px] self-stretch">
+            {/* Icon */}
+            <div className="w-[40px] h-[40px] relative flex-shrink-0">
+                {data.iconUrl ? (
+                    <img
+                        src={data.iconUrl}
+                        alt={data.value}
+                        className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(246,174,49,0.4)]"
+                    />
+                ) : (
+                    <div className="w-[40px] h-[40px] flex items-center justify-center bg-[var(--background-800)] rounded-full text-[var(--accent-900)]">
+                        <Icon icon="mdi:planet" width={24} />
+                    </div>
+                )}
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col justify-center items-start gap-[4px] flex-1">
+                <span className="para-lit text-[var(--text-secondary)]">{data.label}</span>
+                <span className="title-med text-[var(--accent-900)]">{data.value}</span>
+            </div>
+        </div>
     );
 }

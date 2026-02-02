@@ -94,7 +94,7 @@ export default function DashboardPage() {
 
           <div
             onClick={() => dateInputRef.current?.showPicker?.()}
-            className="relative flex items-center justify-center px-6 py-2 rounded-[16px] bg-[var(--background-800)] border border-[var(--background-500)] shadow-inner text-[var(--text-primary)] font-body text-lg capitalize w-full mx-3 text-center overflow-hidden cursor-pointer"
+            className="relative flex items-center justify-center px-6 py-2 rounded-[16px] bg-[var(--background-800)] border border-[var(--background-500)] shadow-inner text-[var(--text-primary)] font-body para capitalize w-full mx-3 text-center overflow-hidden cursor-pointer"
             style={{
               boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2)"
             }}
@@ -402,7 +402,7 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between pb-1">
                 <div className="flex items-baseline gap-1 ">
-                  <span className="para-lit text-[var(--text-secondary)] text-[11px] tracking-wider opacity-80">
+                  <span className="text-[11px] tracking-wider opacity-80 text-[var(--text-secondary)]">
                     Nord :
                   </span>
                   <span className="para-med text-[var(--text-primary)] capitalize font-bold text-sm">
@@ -420,7 +420,7 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-1">
-                  <span className="para-lit text-[var(--text-secondary)] text-[11px] tracking-wider opacity-80">
+                  <span className="text-[11px] tracking-wider opacity-80 text-[var(--text-secondary)]">
                     Sud :
                   </span>
                   <span className="para-med text-[var(--text-primary)] capitalize font-bold text-sm">

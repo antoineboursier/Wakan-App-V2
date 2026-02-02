@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { getQuizResult, type StoredQuizResult } from "@/utils/quizStorage";
 import { QuizResult } from "@/components/quiz/QuizResult";
 import { AnimatePresence, motion } from "framer-motion";
+import { FullscreenModal } from "@/components/ui/FullscreenModal";
 
 interface QuizCardWrapperProps {
     slug: string;
@@ -118,38 +119,26 @@ export function QuizCardWrapper({
             </div>
 
             {/* Result Detail Modal - Exact replica of QuizClient result view */}
-            <AnimatePresence>
-                {showResultModal && quizResult && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-slate-950 text-white overflow-hidden font-sans"
-                    >
-                        {/* Background Layer - Same as QuizClient */}
-                        <div className="absolute inset-0 z-0">
-                            {backgroundImageUrl ? (
-                                <img src={backgroundImageUrl} alt="" className="w-full h-full object-cover opacity-30 blur-sm" />
-                            ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-slate-900 to-black" />
-                            )}
-                            <div className="absolute inset-0 bg-black/40"></div>
-                        </div>
-
-                        {/* Content Layer */}
-                        <div className="relative z-10 w-full h-full">
-                            <QuizResult
-                                profile={quizResult.primary}
-                                secondaryProfiles={quizResult.secondary}
-                                resultSubtitle={title}
-                                onExit={handleCloseResultModal}
-                                onBack={handleCloseResultModal}
-                                hideExitButton={true}
-                            />
-                        </div>
-                    </motion.div>
+            {/* Result Detail Modal - Using FullscreenModal */}
+            <FullscreenModal
+                isOpen={showResultModal && !!quizResult}
+                backgroundImageUrl={backgroundImageUrl}
+                onBack={handleCloseResultModal}
+                showShare={true}
+                shareTitle={`Mon résultat : ${quizResult?.primary.name}`}
+                shareText={quizResult?.primary.description_result || `J'ai obtenu le profil ${quizResult?.primary.name} !`}
+            >
+                {quizResult && (
+                    <QuizResult
+                        profile={quizResult.primary}
+                        secondaryProfiles={quizResult.secondary}
+                        resultSubtitle={title}
+                        onExit={handleCloseResultModal}
+                        onBack={handleCloseResultModal}
+                        hideExitButton={true}
+                    />
                 )}
-            </AnimatePresence>
+            </FullscreenModal>
         </>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { getAstralModules } from "@/data/astralModules";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { AstralModule, AstralModuleDefinition } from "@/types/astral";
@@ -9,7 +9,6 @@ import { ProfileCompletionModal } from "@/components/astral/ProfileCompletionMod
 import { MasonryGrid } from "@/components/ui/MasonryGrid";
 import { useRouter } from "next/navigation";
 import { PageBackground } from "@/components/layout/PageBackground";
-import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@iconify/react";
 import { PremiumCard } from "@/components/ui/PremiumCard";
@@ -22,10 +21,15 @@ import { InputField } from "@/components/ui/InputField";
 import { CityAutocomplete } from "@/components/ui/CityAutocomplete";
 
 import { ZodiacProfileView } from "@/components/astral/ZodiacProfileView";
+import { ZodiacProfileCard } from "@/components/profile/ZodiacProfileCard";
+import { calculateZodiacProfile } from "@/utils/astro/zodiacCalculator";
+import { useEnrichedZodiacProfile } from "@/hooks/useEnrichedZodiacProfile";
+import { useEntitlements } from "@/hooks/useEntitlements";
 
 export default function MesAstresPage() {
     const router = useRouter();
     const { profile, isLoaded, updateBirthData, saveBirthData, updateProfile, saveProfile, clearProfile } = useUserProfile();
+    const { isPremium } = useEntitlements();
     const { showToast } = useToast();
 
     // Tabs state
@@ -36,6 +40,18 @@ export default function MesAstresPage() {
     // Modal state
     const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
     const [targetModuleDefinition, setTargetModuleDefinition] = useState<AstralModuleDefinition | null>(null);
+
+    // --- Zodiac Data Calculation ---
+    const computedZodiac = useMemo(() => {
+        if (!profile.birthData?.date) return null;
+        return calculateZodiacProfile(profile.birthData.date);
+    }, [profile.birthData?.date]);
+
+    // Fetch Enriched Data (Images, Descriptions, etc.)
+    const { profile: enrichedZodiacData, loading: loadingZodiac } = useEnrichedZodiacProfile(
+        computedZodiac?.sunSign || '',
+        computedZodiac?.decan || 1
+    );
 
     // Compute modules with unlocked status
     const modules: AstralModule[] = useMemo(() => {
@@ -101,6 +117,20 @@ export default function MesAstresPage() {
         }
     };
 
+    // Helper to save data from Zodiac Card Modal
+    const handleAddZodiacInfo = (data: { time?: string; place?: any }) => {
+        // Merge updates
+        const updates: any = {};
+        if (data.time) updates.time = data.time;
+        if (data.place) updates.place = data.place;
+
+        updateBirthData(updates);
+        saveBirthData(updates).then(ok => {
+            if (ok) showToast("Informations complétées !", "success");
+        });
+    };
+
+
     if (!isLoaded) return null;
 
     const TABS = [
@@ -125,7 +155,7 @@ export default function MesAstresPage() {
 
                 {/* 2. Content Views */}
                 <AnimatePresence mode="wait">
-                    {activeTab === 'astres' ? (
+                    {activeTab === 'astres' && (
                         <motion.div
                             key="astres"
                             initial={{ opacity: 0, x: -20 }}
@@ -134,40 +164,86 @@ export default function MesAstresPage() {
                             transition={{ duration: 0.3 }}
                             className="flex flex-col gap-6"
                         >
-                            {viewModuleId === 'zodiac' && profile.birthData?.date ? (
-                                <ZodiacProfileView
-                                    birthDate={profile.birthData.date}
-                                    onBack={() => setViewModuleId(null)}
-                                />
-                            ) : (
-                                <>
-                                    {/* Premium Banner */}
-                                    <div className="w-full">
-                                        <PremiumCard variant="sales" />
-                                    </div>
-
-                                    {/* Solar Separator */}
-                                    <div className="flex justify-center items-center gap-4 py-2 opacity-60">
-                                        <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[var(--accent-500)]"></div>
-                                        <Icon icon="mdi:white-balance-sunny" className="text-[var(--accent-500)] w-5 h-5 animate-pulse-slow" />
-                                        <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[var(--accent-500)]"></div>
-                                    </div>
-
-                                    {/* Grid des modules */}
-                                    <MasonryGrid>
-                                        {modules.map((module) => (
-                                            <AstralModuleCard
-                                                key={module.id}
-                                                module={module}
-                                                onComplete={() => handleComplete(module)}
-                                                onView={() => handleView(module)}
-                                            />
-                                        ))}
-                                    </MasonryGrid>
-                                </>
+                            {/* Premium Banner */}
+                            {!isPremium && userHasCompletedProfile(profile) && (
+                                <div className="w-full">
+                                    <PremiumCard variant="sales" />
+                                </div>
                             )}
+
+                            {/* Solar Separator */}
+                            <div className="flex justify-center items-center gap-4 py-2 opacity-60">
+                                <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[var(--accent-500)]"></div>
+                                <Icon icon="mdi:white-balance-sunny" className="text-[var(--accent-500)] w-5 h-5 animate-pulse-slow" />
+                                <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[var(--accent-500)]"></div>
+                            </div>
+
+                            {/* Grid des modules */}
+                            <MasonryGrid>
+                                {modules.map((module) => {
+                                    if (module.id === 'zodiac') {
+                                        // Si on a les données pour afficher le profil enrichi, on affiche la nouvelle carte
+                                        if (enrichedZodiacData && !loadingZodiac) {
+
+                                            // Mock Ascendant (in real app, this comes from backend calc)
+                                            // Using forced missing state as requested.
+
+                                            return (
+                                                <ZodiacProfileCard
+                                                    key={module.id}
+                                                    signName={enrichedZodiacData.sign_name || enrichedZodiacData.sign_slug} // Fallback
+                                                    signIconUrl={enrichedZodiacData.sign_icon_glow || ""}
+                                                    heroImageUrl={enrichedZodiacData.sign_hero_image}
+                                                    decan={`${enrichedZodiacData.decan}${enrichedZodiacData.decan === 1 ? 'er' : 'ème'} Décan`}
+
+                                                    // Ruling Planet (Available but simplified icon)
+                                                    rulingPlanet={{
+                                                        label: "Planète Maîtresse",
+                                                        value: enrichedZodiacData.ruling_planet?.name_fr || "Inconnue",
+                                                        // iconUrl: enrichedZodiacData.ruling_planet?.icon_image_url, // Disabled
+                                                        isLocked: !isPremium && enrichedZodiacData.is_master_planet_premium
+                                                    }}
+
+                                                    // Ascendant (Forced Missing State)
+                                                    ascendant={{
+                                                        label: "Ascendant",
+                                                        missingRequirement: 'birthTime' // Always show Add button for now
+                                                    }}
+
+                                                    // Use module for premium check if available there? No relying on explicit entitlement.
+                                                    onAddInfo={handleAddZodiacInfo}
+                                                    onViewDetail={() => setViewModuleId('zodiac')}
+                                                />
+                                            );
+                                        }
+                                        // Fallback loading or empty if no birthdate
+                                        if (!profile.birthData?.date) {
+                                            return (
+                                                <AstralModuleCard
+                                                    key={module.id}
+                                                    module={module}
+                                                    onComplete={() => handleComplete(module)}
+                                                    onView={() => { }}
+                                                />
+                                            );
+                                        }
+                                    }
+
+                                    // Default Generic Card for other modules
+                                    return (
+                                        <AstralModuleCard
+                                            key={module.id}
+                                            module={module}
+                                            onComplete={() => handleComplete(module)}
+                                            onView={() => handleView(module)}
+                                        />
+                                    );
+                                })}
+                            </MasonryGrid>
                         </motion.div>
-                    ) : (
+                    )}
+
+                    {activeTab === 'profil' && (
                         <motion.div
                             key="profil"
                             initial={{ opacity: 0, x: 20 }}
@@ -268,19 +344,13 @@ export default function MesAstresPage() {
                                 >
                                     Se déconnecter
                                 </Button>
-
-                                <button className="ui-button-text underline !font-normal text-sm text-[var(--text-secondary)] hover:text-white transition-colors">
-                                    Supprimer mon compte
-                                </button>
-                                <button className="ui-button-text underline !font-normal text-sm text-[var(--text-secondary)] hover:text-white transition-colors">
-                                    À propos de l'application
-                                </button>
+                                {/* Removed unimplemented buttons to clean up UI for now or keep them dormant */}
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Keep completion Modal for 'astres' view triggered by cards */}
+                {/* Keep completion Modal for 'astres' view triggered by generic cards */}
                 {targetModuleDefinition && (
                     <ProfileCompletionModal
                         isOpen={isCompletionModalOpen}
@@ -290,6 +360,20 @@ export default function MesAstresPage() {
                     />
                 )}
             </div>
+
+            {/* Zodiac Profile Modal - fullscreen like quiz results */}
+            <AnimatePresence>
+                {viewModuleId === 'zodiac' && profile.birthData?.date && (
+                    <ZodiacProfileView
+                        birthDate={profile.birthData.date}
+                        onBack={() => setViewModuleId(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
+}
+
+function userHasCompletedProfile(p: any) {
+    return !!p.birthData?.date;
 }
