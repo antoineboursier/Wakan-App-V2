@@ -20,8 +20,10 @@ npm install --legacy-peer-deps
 
 ### WYSIWYG Editor (Back Office)
 ```bash
-npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-placeholder @tiptap/extension-color @tiptap/extension-text-style --legacy-peer-deps
+npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-placeholder @tiptap/extension-color @tiptap/extension-text-style @floating-ui/dom @floating-ui/react --legacy-peer-deps
 ```
+
+**Note :** `@floating-ui/dom` et `@floating-ui/react` sont requis explicitement pour éviter des erreurs de build Vercel (dépendances de `@tiptap/react`).
 
 **Fichier concerné :** `src/components/admin/RichTextEditor.tsx`
 
